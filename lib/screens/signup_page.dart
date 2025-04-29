@@ -25,6 +25,7 @@ class _SignUpState extends State<SignUpPage> {
     '&',
     '\$',
     '_',
+    '/',
   ]; // allowed special characters ?
   FormValues formValues = FormValues();
 
