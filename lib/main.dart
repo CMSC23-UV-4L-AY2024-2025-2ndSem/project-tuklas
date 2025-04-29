@@ -29,9 +29,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Tuklas',
       initialRoute: '/signup',
-      routes: {
-        '/signup': (context) => const SignUpPage()
-      },
+      routes: {'/signup': (context) => const SignUpPage()},
       theme: ThemeData(primarySwatch: Colors.blue),
     );
   }
