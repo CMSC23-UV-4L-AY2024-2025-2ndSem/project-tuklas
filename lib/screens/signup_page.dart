@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/screens/signin_page.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
@@ -288,10 +289,10 @@ class _SignUpState extends State<SignUpPage> {
         TextButton(
           onPressed: () {
             // Move to sign in page
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => const SignInPage()),
-            // );
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SignInPage()),
+            );
           },
           child: Text(
             "Sign In",
