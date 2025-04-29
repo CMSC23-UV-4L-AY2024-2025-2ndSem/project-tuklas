@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/signup_form_values.dart';
+import 'main_screen.dart'; // Replace with your actual home screen filename and class
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -250,13 +251,14 @@ class _SignUpState extends State<SignUpPage> {
 
         setState(() {
           if (message == "Success!") {
+            // navigate to main screen
             showEmailSignUpErrorMessage = false;
-            // Move to homepage ! all checks completed, sign up success
-            // if (mounted) {
-            // Navigator.pushReplacement(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => const HomePage()),
-            // );
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+            }
           } else {
             if (message == 'email-already-in-use') {
               showEmailSignUpErrorMessage = true;
@@ -337,13 +339,14 @@ class _SignUpState extends State<SignUpPage> {
 
         setState(() {
           if (message == "Success!") {
+            // navigate to mian screen
             showEmailSignUpErrorMessage = false;
-            // Move to homepage ! all checks completed, sign up success
-            // if (mounted) {
-            // Navigator.pushReplacement(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => const HomePage()),
-            // );
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+            }
           } else {
             if (message == 'email-already-in-use') {
               showEmailSignUpErrorMessage = true;
