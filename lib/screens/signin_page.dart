@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:project_TUKLAS/screens/signup_page.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -168,6 +169,10 @@ class _SignInPageState extends State<SignInPage> {
   Widget get signUpButton => TextButton(
     onPressed: () {
       //Navigator.pushNamed(context, '/signup');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SignUpPage()),
+      );
     },
     child: Text(
       "Don't have an account? ",

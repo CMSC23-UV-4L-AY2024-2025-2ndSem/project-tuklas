@@ -253,6 +253,13 @@ class _SignUpState extends State<SignUpPage> {
           if (message == "Success!") {
             // navigate to main screen
             showEmailSignUpErrorMessage = false;
+            // Move to homepage ! all checks completed, sign up success
+            // if (mounted) {
+            // Navigator.pushReplacement(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => const HomePage()),
+            // );
+            Navigator.pop(context);
             if (mounted) {
               Navigator.pushReplacement(
                 context,
