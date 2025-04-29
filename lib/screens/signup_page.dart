@@ -256,6 +256,7 @@ class _SignUpState extends State<SignUpPage> {
             //   context,
             //   MaterialPageRoute(builder: (context) => const HomePage()),
             // );
+            Navigator.pop(context);
           } else {
             if (message == 'email-already-in-use') {
               showEmailSignUpErrorMessage = true;
