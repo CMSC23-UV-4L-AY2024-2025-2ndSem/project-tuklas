@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/main_navigation_bar.dart';
-import 'dummy.dart';
+import 'travel_plan.dart';
 import 'travel_buddy.dart';
 
 class MainScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const DummyScreen(),
+    const TravelPlanScreen(),
     const SizedBox(), // empty yet for the add button
     TravelBuddyScreen(),
   ];
