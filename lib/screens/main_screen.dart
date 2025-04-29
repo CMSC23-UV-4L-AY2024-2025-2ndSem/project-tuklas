@@ -40,8 +40,9 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // displays the correct screen instantly without pushing routes, not sure if this is recommended
+          // main content area
           _screens[_selectedIndex],
+          // single navigation bar that stays on top
           MainNavigationBar(
             selectedIndex: _selectedIndex,
             onButtonPressed: _onButtonPressed,

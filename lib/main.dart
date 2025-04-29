@@ -1,7 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:project_TUKLAS/screens/main_screen.dart';
-import 'package:project_TUKLAS/screens/travel_buddy.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
@@ -34,7 +33,6 @@ class MyApp extends StatelessWidget {
       routes: {
         '/signup': (context) => const SignUpPage(),
         '/': (context) => const MainScreen(),
-        '/travel': (context) => TravelBuddyScreen(),
       },
       theme: ThemeData(primarySwatch: Colors.blue),
     );
