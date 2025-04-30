@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/screens/signup_page.dart';
@@ -15,9 +16,12 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   final _formKey = GlobalKey<FormState>();
+  String? username;
   String? email;
   String? password;
   String? errorMessage;
+  bool showSignUpErrorMessage = false;
+  bool showUsernameSignUpErrorMessage = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +41,14 @@ class _SignInPageState extends State<SignInPage> {
                     errorMessage!,
                     style: const TextStyle(color: Colors.red),
                   ),
-                emailField,
+                usernameField,
                 passwordField,
+                showSignUpErrorMessage
+                    ? signUpErrorMessage('Password')
+                    : Container(),
+                showUsernameSignUpErrorMessage
+                    ? signUpErrorMessage('Username')
+                    : Container(),
                 submitButton,
                 SizedBox(height: 10),
                 signUpButton,
@@ -77,7 +87,7 @@ class _SignInPageState extends State<SignInPage> {
     ),
   );
 
-  Widget get emailField => Padding(
+  Widget get usernameField => Padding(
     padding: const EdgeInsets.only(bottom: 20),
     child: TextFormField(
       decoration: InputDecoration(
@@ -89,18 +99,21 @@ class _SignInPageState extends State<SignInPage> {
           borderSide: BorderSide(color: Color(0xFF027572), width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
-        label: const Text("Email address"),
+        label: const Text("Username"),
         labelStyle: GoogleFonts.poppins(fontSize: 16, color: Color(0x80027572)),
-        hintText: "Enter your email",
+        hintText: "Enter your username",
         hintStyle: GoogleFonts.poppins(
           fontSize: 16,
           color: Color.fromARGB(128, 62, 82, 81),
         ),
       ),
-      onSaved: (value) => setState(() => email = value),
+      onSaved:
+          (value) => setState(() {
+            username = value;
+          }),
       validator: (value) {
-        if (value == null || value.isEmpty || !value.contains('@')) {
-          return "Please enter a valid email";
+        if (value == null || value.isEmpty) {
+          return "Please enter a username";
         }
         return null;
       },
@@ -128,13 +141,25 @@ class _SignInPageState extends State<SignInPage> {
         ),
       ),
       obscureText: true,
-      onSaved: (value) => setState(() => password = value),
+      onSaved:
+          (value) => setState(() {
+            password = value;
+          }),
       validator: (value) {
         if (value == null || value.isEmpty) {
           return "Password can't be empty";
         }
         return null;
       },
+    ),
+  );
+
+  Widget signUpErrorMessage(cred) => Padding(
+    // will be displayed when either email or username is already being used by existing account
+    padding: EdgeInsets.only(bottom: 10),
+    child: Text(
+      "$cred invalid!",
+      style: GoogleFonts.poppins(fontSize: 13, color: Colors.red),
     ),
   );
 
@@ -148,15 +173,50 @@ class _SignInPageState extends State<SignInPage> {
     onPressed: () async {
       if (_formKey.currentState!.validate()) {
         _formKey.currentState!.save();
+        email = null;
+
+        await FirebaseFirestore
+            .instance // snapshot of db with usernames similar to user input username
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .limit(1)
+            .get()
+            .then((QuerySnapshot querySnapshot) {
+              setState(() {
+                if (querySnapshot.docs.isEmpty) {
+                  showUsernameSignUpErrorMessage = true;
+                } else {
+                  querySnapshot.docs.forEach((doc) {
+                    email = doc["email"];
+                    showUsernameSignUpErrorMessage = false;
+                  });
+                }
+              });
+              ;
+            });
 
         final provider = Provider.of<UserAuthProvider>(context, listen: false);
-        //final error = await provider.signIn(email: email!, password: password!);
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-          );
-        }
+        String? message = await provider.signIn(
+          email: email!,
+          password: password!,
+        );
+
+        print(message);
+        setState(() {
+          if (message == "invalid-credential") {
+            showSignUpErrorMessage = true;
+          } else if (message == "Success!") {
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+              );
+              showSignUpErrorMessage = false;
+            }
+          } else {
+            showSignUpErrorMessage = false;
+          }
+        });
       }
     },
     child: Text(
