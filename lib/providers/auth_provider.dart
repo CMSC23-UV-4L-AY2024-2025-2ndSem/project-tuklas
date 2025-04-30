@@ -6,28 +6,40 @@ class UserAuthProvider with ChangeNotifier {
   late FirebaseAuthAPI authService;
   late Stream<User?> userStream;
 
-    UserAuthProvider(){
-      authService = FirebaseAuthAPI();
-      userStream = authService.getUserStream();
-    }
+  UserAuthProvider() {
+    authService = FirebaseAuthAPI();
+    userStream = authService.getUserStream();
+  }
 
-    Future<String> signIn(String email, String password, String fName, String lName) async {
-      String message = await authService.signIn(email, password);
-      notifyListeners();
-      return message;
-    }
+  Future<String> signIn({
+    required String email,
+    required String password,
+  }) async {
+    String message = await authService.signIn(email, password);
+    notifyListeners();
+    return message;
+  }
 
-    Future<String> signUp(String email, String password, String fName, String lName, String uName) async {
-      String message = await authService.signUp(email, password, fName, lName, uName);
-      notifyListeners();
-      return message;
-    }
-    
-    Future<void> signOut(String email, String password) async {
-      await authService.signOut();
-      notifyListeners();
-    }
+  Future<String> signUp(
+    String email,
+    String password,
+    String fName,
+    String lName,
+    String uName,
+  ) async {
+    String message = await authService.signUp(
+      email,
+      password,
+      fName,
+      lName,
+      uName,
+    );
+    notifyListeners();
+    return message;
+  }
 
-    
-
+  Future<void> signOut(String email, String password) async {
+    await authService.signOut();
+    notifyListeners();
+  }
 }

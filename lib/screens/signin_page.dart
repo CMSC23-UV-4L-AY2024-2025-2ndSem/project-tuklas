@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/screens/signup_page.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/auth_provider.dart';
+import 'main_screen.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -145,15 +149,14 @@ class _SignInPageState extends State<SignInPage> {
       if (_formKey.currentState!.validate()) {
         _formKey.currentState!.save();
 
-        //final provider = Provider.of<UserAuthProvider>(context, listen: false);
+        final provider = Provider.of<UserAuthProvider>(context, listen: false);
         //final error = await provider.signIn(email: email!, password: password!);
-
-        // if (error != null) {
-        //   setState(() => errorMessage = error);
-        // } else if (mounted) {
-        //   // Navigate to home screen
-        //   Navigator.pushReplacementNamed(context, "/");
-        // }
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+          );
+        }
       }
     },
     child: Text(
