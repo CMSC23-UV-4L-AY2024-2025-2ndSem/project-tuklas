@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/screens/signup_page.dart';
 import 'package:provider/provider.dart';
+import '../models/signin_form_values.dart';
 
 import '../providers/auth_provider.dart';
 import 'main_screen.dart';
@@ -16,12 +16,9 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   final _formKey = GlobalKey<FormState>();
-  String? username;
-  String? email;
-  String? password;
-  String? errorMessage;
   bool showSignUpErrorMessage = false;
   bool showUsernameSignUpErrorMessage = false;
+  FormValues formValues = FormValues();
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +32,8 @@ class _SignInPageState extends State<SignInPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                SizedBox(height:150),
                 title,
-                if (errorMessage != null)
-                  Text(
-                    errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
                 usernameField,
                 passwordField,
                 showSignUpErrorMessage
@@ -109,7 +102,7 @@ class _SignInPageState extends State<SignInPage> {
       ),
       onSaved:
           (value) => setState(() {
-            username = value;
+            formValues.textfieldValues['uName'] = value;
           }),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -143,7 +136,7 @@ class _SignInPageState extends State<SignInPage> {
       obscureText: true,
       onSaved:
           (value) => setState(() {
-            password = value;
+            formValues.textfieldValues['password'] = value;
           }),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -173,45 +166,36 @@ class _SignInPageState extends State<SignInPage> {
     onPressed: () async {
       if (_formKey.currentState!.validate()) {
         _formKey.currentState!.save();
-        email = null;
-
-        await FirebaseFirestore
-            .instance // snapshot of db with usernames similar to user input username
-            .collection('users')
-            .where('username', isEqualTo: username)
-            .limit(1)
-            .get()
-            .then((QuerySnapshot querySnapshot) {
-              setState(() {
-                if (querySnapshot.docs.isEmpty) {
-                  showUsernameSignUpErrorMessage = true;
-                } else {
-                  querySnapshot.docs.forEach((doc) {
-                    email = doc["email"];
-                    showUsernameSignUpErrorMessage = false;
-                  });
-                }
-              });
-              ;
-            });
+        String? email;
+        String? message;
 
         final provider = Provider.of<UserAuthProvider>(context, listen: false);
-        String? message = await provider.signIn(
-          email: email!,
-          password: password!,
-        );
+        print(formValues.textfieldValues['uName']);
+        email = await context.read<UserAuthProvider>().authService.findEmail(formValues.textfieldValues['uName']!);
+        setState(() {
+          if (email == null){ // if email is not found, username does not exist in db
+            showUsernameSignUpErrorMessage = true;
+          } else {
+            showUsernameSignUpErrorMessage = false;
+          }
+        });
+        
+        if (email != null){
+          message = await provider.signIn(
+          email: email,
+          password: formValues.textfieldValues['password']!,
+        );}
 
-        print(message);
         setState(() {
           if (message == "invalid-credential") {
             showSignUpErrorMessage = true;
           } else if (message == "Success!") {
+            showSignUpErrorMessage = false;
             if (mounted) {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const MainScreen()),
               );
-              showSignUpErrorMessage = false;
             }
           } else {
             showSignUpErrorMessage = false;
