@@ -1,5 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import '../../providers/user_profile_provider.dart';
+import 'package:project_TUKLAS/screens/account_setup/travel_interests_page.dart';
+import 'package:project_TUKLAS/screens/account_setup/travel_styles_page.dart';
 import 'package:project_TUKLAS/screens/main_screen.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
@@ -15,6 +18,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => UserAuthProvider()),
         Provider<UserAuthProvider>(create: (_) => UserAuthProvider()),
+        Provider<UserProfileProvider>(create: (_) => UserProfileProvider()),
       ],
       child: const MyApp(),
     ),
@@ -33,6 +37,18 @@ class MyApp extends StatelessWidget {
       routes: {
         '/signup': (context) => const SignUpPage(),
         '/': (context) => const MainScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/travel-styles') {
+          final username = settings.arguments; 
+
+          return MaterialPageRoute(builder: (context) => TravelStylesPage(username: username as String));
+        } else if (settings.name == '/travel-interests') {
+          final username = settings.arguments; 
+
+          return MaterialPageRoute(builder: (context) => InterestsPage(username: username as String));
+        }
+        return null;
       },
       theme: ThemeData(primarySwatch: Colors.blue),
     );
