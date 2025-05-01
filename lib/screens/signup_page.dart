@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/screens/account_setup/travel_styles_page.dart';
 import 'package:project_TUKLAS/screens/signin_page.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import '../models/signup_form_values.dart';
-import 'main_screen.dart'; // Replace with your actual home screen filename and class
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -244,16 +244,11 @@ class _SignUpState extends State<SignUpPage> {
             // navigate to main screen
             showEmailSignUpErrorMessage = false;
             // Move to homepage ! all checks completed, sign up success
-            // if (mounted) {
-            // Navigator.pushReplacement(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => const HomePage()),
-            // );
             Navigator.pop(context);
             if (mounted) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const MainScreen()),
+                MaterialPageRoute(builder: (context) => TravelStylesPage(username: formValues.textfieldValues['uName']!)),
               );
             }
           } else {
@@ -332,7 +327,7 @@ class _SignUpState extends State<SignUpPage> {
             if (mounted) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const MainScreen()),
+                MaterialPageRoute(builder: (context) => TravelStylesPage(username: formValues.textfieldValues['uName']!)),
               );
             }
           } else {
