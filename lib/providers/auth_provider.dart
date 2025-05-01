@@ -42,4 +42,16 @@ class UserAuthProvider with ChangeNotifier {
     await authService.signOut();
     notifyListeners();
   }
+
+  Future<bool> checkUsername(String username) async {
+    bool exists = await authService.checkUsername(username);
+    notifyListeners();
+    return exists;
+  }
+
+  Future<String> findEmail(String username) async {
+    String? email = await authService.findEmail(username);
+    notifyListeners();
+    return email!;
+  }
 }

@@ -13,7 +13,7 @@ class FirebaseAuthAPI {
       await auth.signInWithEmailAndPassword(email: email, password: password);
       return 'Success!';
     } on FirebaseAuthException catch (e) {
-      return "${e.code}";
+      return (e.code);
     }
   }
 
@@ -48,5 +48,40 @@ class FirebaseAuthAPI {
 
   Future<void> signOut() async {
     await auth.signOut();
+  }
+
+  Future<bool> checkUsername(String username) async{
+    final snapshot = await FirebaseFirestore
+      .instance // snapshot of db with usernames similar to user input username
+      .collection('users')
+      .where(
+        'username',
+        isEqualTo: username,
+      )
+      .get();
+
+    if (snapshot.docs.isEmpty){
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  Future<String?> findEmail(String username) async {
+    String? email;
+    await FirebaseFirestore
+      .instance // snapshot of db with usernames similar to user input username
+      .collection('users')
+      .where('username', isEqualTo: username)
+      .limit(1)
+      .get()
+      .then((QuerySnapshot querySnapshot) {
+        if (querySnapshot.docs.isEmpty) {
+          email = null;
+        } else {
+          email = querySnapshot.docs[0]['email'];
+        }
+      });
+    return email;
   }
 }

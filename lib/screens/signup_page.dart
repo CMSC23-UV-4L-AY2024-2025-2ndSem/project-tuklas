@@ -3,7 +3,6 @@ import 'package:project_TUKLAS/screens/signin_page.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/signup_form_values.dart';
 import 'main_screen.dart'; // Replace with your actual home screen filename and class
 
@@ -224,18 +223,9 @@ class _SignUpState extends State<SignUpPage> {
       String? message;
       if (_formKey.currentState!.validate()) {
         _formKey.currentState!.save();
+        bool userExists = await context.read<UserAuthProvider>().authService.checkUsername(formValues.textfieldValues['uName']!);
 
-        final snapshot =
-            await FirebaseFirestore
-                .instance // snapshot of db with usernames similar to user input username
-                .collection('users')
-                .where(
-                  'username',
-                  isEqualTo: formValues.textfieldValues['uName'],
-                )
-                .get();
-
-        if (snapshot.docs.isNotEmpty) {
+        if (userExists) {
           // if it is not empty, username is already being used
           showUserSignUpErrorMessage = true;
         } else {
@@ -319,18 +309,9 @@ class _SignUpState extends State<SignUpPage> {
       String? message;
       if (_formKey.currentState!.validate()) {
         _formKey.currentState!.save();
+        bool userExists = await context.read<UserAuthProvider>().authService.checkUsername(formValues.textfieldValues['uName']!);
 
-        final snapshot =
-            await FirebaseFirestore
-                .instance // snapshot of db with usernames similar to user input username
-                .collection('users')
-                .where(
-                  'username',
-                  isEqualTo: formValues.textfieldValues['uName'],
-                )
-                .get();
-
-        if (snapshot.docs.isNotEmpty) {
+        if (userExists) {
           // if it is not empty, username is already being used
           showUserSignUpErrorMessage = true;
         } else {
