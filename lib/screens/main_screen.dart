@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/screens/addplan_page.dart';
 import '../widgets/main_navigation_bar.dart';
 import 'travel_plan.dart';
 import 'travel_buddy.dart';
@@ -24,6 +25,12 @@ class _MainScreenState extends State<MainScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Add Button Pressed')));
+
+      //Pau: temporarily added to test add to plan page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AddtravelPage()),
+      );
       return;
     }
 
