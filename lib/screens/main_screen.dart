@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project_TUKLAS/screens/addplan_page.dart';
 import '../widgets/main_navigation_bar.dart';
+import '../widgets/add_overlay.dart';
 import 'travel_plan.dart';
 import 'travel_buddy.dart';
 
@@ -13,6 +14,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  bool _showOverlay = false;
 
   final List<Widget> _screens = [
     const TravelPlanScreen(),
@@ -22,15 +24,7 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onButtonPressed(int index) {
     if (index == 1) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Add Button Pressed')));
-
-      //Pau: temporarily added to test add to plan page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const AddtravelPage()),
-      );
+      setState(() => _showOverlay = !_showOverlay);
       return;
     }
 
@@ -49,11 +43,13 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           // main content area
           _screens[_selectedIndex],
-          // single navigation bar that stays on top
           MainNavigationBar(
             selectedIndex: _selectedIndex,
             onButtonPressed: _onButtonPressed,
           ),
+          if (_showOverlay)
+            AddOverlay(onClose: () => setState(() => _showOverlay = false)),
+          // single navigation bar that stays on top
         ],
       ),
     );
