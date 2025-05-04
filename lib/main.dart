@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
+import 'package:project_TUKLAS/screens/addplan_page.dart';
 import 'package:project_TUKLAS/screens/main_screen.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
@@ -15,6 +17,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => UserAuthProvider()),
         Provider<UserAuthProvider>(create: (_) => UserAuthProvider()),
+        ChangeNotifierProvider(create: (_) => TravelPlanProvider()),
       ],
       child: const MyApp(),
     ),
