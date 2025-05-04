@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:project_TUKLAS/screens/addplan_page.dart';
 import '../widgets/main_navigation_bar.dart';
 import '../widgets/add_overlay.dart';
 import 'travel_plan.dart';

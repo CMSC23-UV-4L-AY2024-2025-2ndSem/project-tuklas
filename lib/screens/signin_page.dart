@@ -32,7 +32,7 @@ class _SignInPageState extends State<SignInPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: 150),
+                SizedBox(height:150),
                 title,
                 usernameField,
                 passwordField,
@@ -171,24 +171,20 @@ class _SignInPageState extends State<SignInPage> {
 
         final provider = Provider.of<UserAuthProvider>(context, listen: false);
         print(formValues.textfieldValues['uName']);
-        email = await context.read<UserAuthProvider>().authService.findEmail(
-          formValues.textfieldValues['uName']!,
-        );
+        email = await context.read<UserAuthProvider>().authService.findEmail(formValues.textfieldValues['uName']!);
         setState(() {
-          if (email == null) {
-            // if email is not found, username does not exist in db
+          if (email == null){ // if email is not found, username does not exist in db
             showUsernameSignUpErrorMessage = true;
           } else {
             showUsernameSignUpErrorMessage = false;
           }
         });
-
-        if (email != null) {
+        
+        if (email != null){
           message = await provider.signIn(
-            email: email,
-            password: formValues.textfieldValues['password']!,
-          );
-        }
+          email: email,
+          password: formValues.textfieldValues['password']!,
+        );}
 
         setState(() {
           if (message == "invalid-credential") {
