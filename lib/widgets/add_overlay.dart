@@ -1,5 +1,6 @@
 // add_overlay.dart
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/screens/travel_plan.dart';
 
 typedef ActionCallback = void Function();
 
@@ -8,8 +9,11 @@ class AddOverlay extends StatelessWidget {
 
   const AddOverlay({super.key, required this.onClose});
 
-  void _onAddTravelPlan() {
-    // navigate here if context is passed
+  void _onAddTravelPlan(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TravelPlanScreen()),
+    );
   }
 
   void _onAddTravelBuddy() {
@@ -36,7 +40,7 @@ class AddOverlay extends StatelessWidget {
                   children: [
                     GestureDetector(
                       // travel plan button
-                      onTap: _onAddTravelPlan,
+                      onTap: () => _onAddTravelPlan(context),
                       child: Container(
                         width: 120,
                         padding: const EdgeInsets.symmetric(vertical: 7),
