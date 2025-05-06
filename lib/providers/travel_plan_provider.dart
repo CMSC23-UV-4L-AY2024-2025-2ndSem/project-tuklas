@@ -19,14 +19,26 @@ class TravelPlanProvider with ChangeNotifier {
   }
 
   // method to get travel plans for the current user
-  Stream<QuerySnapshot> get travelplan {
+  Stream<QuerySnapshot<Map<String, dynamic>>> get travelplan {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const Stream.empty();
-    // fetch the travel plans for the current user
+    if (user == null) {
+      // return an empty stream of the correct type if user is null
+      return FirebaseFirestore.instance
+          .collection('plans')
+          .where('userId', isEqualTo: '__nouser__') // Use an impossible value
+          .snapshots()
+          // cast the resulting stream's snapshot type
+          .map((snapshot) => snapshot as QuerySnapshot<Map<String, dynamic>>);
+    }
+
+    // fetch the plans for the current user and ensure the stream type is correct
     return FirebaseFirestore.instance
         .collection('plans')
         .where('userId', isEqualTo: user.uid)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) {
+          return snapshot as QuerySnapshot<Map<String, dynamic>>;
+        });
   }
 
   // method to add plans and store in Firestore

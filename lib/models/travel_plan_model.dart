@@ -8,6 +8,7 @@ class TravelPlan {
   List<Timestamp> dates = [];
   GeoPoint? location;
   final String? userId;
+  String? imageUrl;
 
   //add more non-required fields here (e.g. flight details, accomodation, notes, checklist, routes, activities)
 
@@ -17,9 +18,9 @@ class TravelPlan {
     required this.dates,
     required this.location,
     this.userId,
+    this.imageUrl,
   });
 
-  // Factory constructor to instantiate object from json format
   // to create an Expenses object from a JSON map
   factory TravelPlan.fromJson(Map<String, dynamic> json) {
     return TravelPlan(
@@ -34,6 +35,7 @@ class TravelPlan {
               .toList(),
       location: json['location'],
       userId: json['userId'],
+      imageUrl: json['imageUrl'],
     );
   }
 
@@ -51,6 +53,7 @@ class TravelPlan {
       'dates': dates,
       'location': location,
       'userId': userId,
+      'imageUrl': imageUrl,
     };
   }
 }
