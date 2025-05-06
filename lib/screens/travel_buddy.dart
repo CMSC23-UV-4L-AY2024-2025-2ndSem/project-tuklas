@@ -26,7 +26,10 @@ class TravelBuddyScreen extends StatelessWidget {
                     children: const [
                       Text(
                         "Good morning,",
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 0, 0, 0),
+                        ),
                       ),
                       SizedBox(height: 4),
                       Text(
