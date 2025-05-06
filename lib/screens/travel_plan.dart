@@ -123,7 +123,7 @@ class TravelPlanScreen extends StatelessWidget {
                           firstName,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                             color: const Color(0xFF14645B),
                           ),
                         ),
@@ -175,7 +175,7 @@ class TravelPlanScreen extends StatelessWidget {
                   "Upcoming Travel Plan",
                   style: GoogleFonts.poppins(
                     fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: const Color.fromARGB(221, 0, 0, 0),
                   ),
                 ),
@@ -190,7 +190,7 @@ class TravelPlanScreen extends StatelessWidget {
                   "All Travel Plans",
                   style: GoogleFonts.poppins(
                     fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: const Color.fromARGB(221, 0, 0, 0),
                   ),
                 ),
@@ -560,10 +560,134 @@ class TravelPlanItem extends StatelessWidget {
                   color: Colors.red.shade600,
                 ),
               ),
-              onTap: () {
-                Navigator.pop(context); // close the bottom sheet first
-                // TO DO: implement delete functionality
-                print('Delete tapped for plan: ${planToShowOptionsFor.id}');
+              onTap: () async {
+                Navigator.pop(bc); // close the bottom sheet first
+
+                // show confirmation dialog
+                bool? confirmDelete = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext dialogContext) {
+                    return AlertDialog(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      title: Text(
+                        'Delete Plan',
+                        style: GoogleFonts.poppins(
+                          // style the title
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: const Color.fromARGB(
+                            255,
+                            0,
+                            0,
+                            0,
+                          ), // adjust color if needed
+                        ),
+                      ),
+                      content: Text(
+                        'Are you sure you want to delete "${planToShowOptionsFor.name}"?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color:
+                              Colors.black54, // adjust content color if needed
+                        ),
+                      ),
+                      actions: <Widget>[
+                        // cancel button
+                        TextButton(
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey.shade700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          onPressed:
+                              () => Navigator.of(dialogContext).pop(false),
+                        ),
+                        // delete button
+                        TextButton(
+                          child: Text(
+                            'Delete',
+                            style: GoogleFonts.poppins(
+                              color: Colors.red.shade600,
+                              fontWeight:
+                                  FontWeight
+                                      .w500, // slightly bolder delete text
+                              fontSize: 14,
+                            ),
+                          ),
+                          onPressed:
+                              () => Navigator.of(dialogContext).pop(true),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                // proceed with deletion only if user confirmed
+                if (confirmDelete == true) {
+                  final String? planId = planToShowOptionsFor.id;
+                  if (planId == null || planId.isEmpty) {
+                    print('Error: Plan ID is null or empty, cannot delete.');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Cannot delete plan: Missing ID.',
+                            style: GoogleFonts.poppins(),
+                          ),
+                          backgroundColor: Colors.orange.shade800,
+                        ),
+                      );
+                    }
+                    return; // stop execution if id is invalid
+                  }
+                  try {
+                    // access the provider to call the delete method
+                    await Provider.of<TravelPlanProvider>(
+                      context,
+                      listen: false,
+                    ).deletePlan(planId);
+
+                    if (context.mounted) {
+                      // check if widget is still mounted before showing snackbar
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '"${planToShowOptionsFor.name}" deleted.',
+                            style: GoogleFonts.poppins(),
+                          ),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    print(
+                      'Error deleting plan UI: ${planToShowOptionsFor.id} - $e',
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Failed to delete: ${e.toString().replaceFirst("Exception: ", "")}',
+                            style: GoogleFonts.poppins(),
+                          ),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  }
+                } else {
+                  // log if user cancelled deletion
+                  print(
+                    'Delete cancelled for plan: ${planToShowOptionsFor.id}',
+                  );
+                }
               },
             ),
             // add some padding at the bottom for safe area insets
@@ -575,7 +699,6 @@ class TravelPlanItem extends StatelessWidget {
   }
 
   String _formatDateRange(List<Timestamp>? dates) {
-    // ... (implementation remains the same)
     if (dates == null || dates.isEmpty) {
       return 'n/a'; // handle null or empty dates
     }

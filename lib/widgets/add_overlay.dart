@@ -1,6 +1,6 @@
 // add_overlay.dart
 import 'package:flutter/material.dart';
-import 'package:project_TUKLAS/screens/addlocation_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/screens/addplan_page.dart';
 
 typedef ActionCallback = void Function();
@@ -9,17 +9,6 @@ class AddOverlay extends StatelessWidget {
   final ActionCallback onClose;
 
   const AddOverlay({super.key, required this.onClose});
-
-  // This method might not be needed if logic is simple and put directly in onTap
-  // void _onAddTravelPlan(BuildContext context) {
-  //   // 1. Close the overlay first
-  //   onClose();
-  //   // 2. Navigate to the AddtravelPage
-  //   Navigator.push(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => const AddtravelPage()),
-  //   );
-  // }
 
   void _onAddTravelBuddy() {
     // navigate here if context is passed
@@ -58,7 +47,7 @@ class AddOverlay extends StatelessWidget {
                         );
                       },
                       child: Container(
-                        width: 120,
+                        width: 130,
                         padding: const EdgeInsets.symmetric(vertical: 7),
                         margin: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
@@ -67,18 +56,19 @@ class AddOverlay extends StatelessWidget {
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(
                               Icons.map_outlined,
                               color: Colors.white,
-                              size: 18,
+                              size: 20,
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 3),
                             Text(
-                              "Travel Plan",
-                              style: TextStyle(
+                              "Plan",
+                              style: GoogleFonts.poppins(
                                 color: Colors.white,
-                                fontSize: 14,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -89,7 +79,7 @@ class AddOverlay extends StatelessWidget {
                       // travel buddy button
                       onTap: _onAddTravelBuddy,
                       child: Container(
-                        width: 120,
+                        width: 130,
                         padding: const EdgeInsets.symmetric(vertical: 7),
                         margin: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
@@ -98,18 +88,19 @@ class AddOverlay extends StatelessWidget {
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(
                               Icons.group_outlined,
                               color: Colors.white,
-                              size: 18,
+                              size: 20,
                             ),
-                            SizedBox(height: 8),
+                            SizedBox(height: 3),
                             Text(
-                              "Travel Buddy",
-                              style: TextStyle(
+                              "Buddy",
+                              style: GoogleFonts.poppins(
                                 color: Colors.white,
-                                fontSize: 14,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
