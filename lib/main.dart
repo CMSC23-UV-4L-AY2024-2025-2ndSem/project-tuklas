@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../providers/user_profile_provider.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_interests_page.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_styles_page.dart';
+import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
+import 'package:project_TUKLAS/screens/addplan_page.dart';
 import 'package:project_TUKLAS/screens/main_screen.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
@@ -19,6 +21,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserAuthProvider()),
         Provider<UserAuthProvider>(create: (_) => UserAuthProvider()),
         Provider<UserProfileProvider>(create: (_) => UserProfileProvider()),
+        ChangeNotifierProvider(create: (_) => TravelPlanProvider()),
       ],
       child: const MyApp(),
     ),
