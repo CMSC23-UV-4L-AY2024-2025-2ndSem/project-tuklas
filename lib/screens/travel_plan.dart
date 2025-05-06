@@ -14,32 +14,26 @@ class TravelPlanScreen extends StatelessWidget {
 
   // format date range like "jun 1-7" or "dec 30 - jan 5"
   String _formatDateRange(List<Timestamp>? dates) {
-    if (dates == null || dates.isEmpty)
-      return 'n/a'; // handle null or empty dates
-    String start = DateFormat(
-      'MMM d',
-    ).format(dates.first.toDate()); // format start date
+    if (dates == null || dates.isEmpty) return 'n/a';
+    String start = DateFormat('MMM d').format(dates.first.toDate());
     if (dates.length > 1) {
-      // check if start and end dates are the same day
       DateTime startDate = dates.first.toDate();
       DateTime endDate = dates.last.toDate();
       if (startDate.year == endDate.year &&
           startDate.month == endDate.month &&
           startDate.day == endDate.day) {
-        return start; // return only start date if single day
+        return start;
       }
-      // format end date differently if it's in the same month
       String endFormat = (startDate.month == endDate.month) ? 'd' : 'MMM d';
       String end = DateFormat(endFormat).format(endDate);
-      return '$start–$end'; // return range string
+      return '$start–$end';
     }
-    return start; // return start date if only one date exists
+    return start;
   }
 
-  // placeholder for images if none provided
+  // placeholder images
   final String placeholderImageUrl =
       'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80';
-  // placeholder for avatar images
   final String placeholderAvatarUrl =
       'https://via.placeholder.com/60x60.png?text=P';
 
@@ -56,7 +50,7 @@ class TravelPlanScreen extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Text(
-          'error: $error', // display the error text
+          'error: $error',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(color: Colors.red.shade800),
         ),
@@ -69,184 +63,170 @@ class TravelPlanScreen extends StatelessWidget {
     return FirebaseFirestore.instance.collection('users').doc(uid).get();
   }
 
-  // builds the main screen content, processing plans and user data
+  // builds the main screen content structure
   Widget _buildContent(
     BuildContext context,
     String firstName,
     String? photoURL,
     List<TravelPlan> allPlans,
   ) {
-    TravelPlan? upcomingPlan; // holds the next upcoming plan, if any
+    TravelPlan? upcomingPlan; // holds the next upcoming plan
     if (allPlans.isNotEmpty) {
-      // find plans starting today or later
+      // Find future plans logic (remains the same)
       List<TravelPlan> futurePlans =
           allPlans.where((plan) {
-            if (plan.dates.isEmpty) return false; // skip plans with no dates
+            if (plan.dates.isEmpty) return false;
             DateTime planStartDate = plan.dates.first.toDate();
-            // compare just the date part, ignore time
             DateTime today = DateTime.now();
             DateTime todayStart = DateTime(today.year, today.month, today.day);
-            return !planStartDate.isBefore(
-              todayStart,
-            ); // check if plan date is not before today
+            return !planStartDate.isBefore(todayStart);
           }).toList();
 
       if (futurePlans.isNotEmpty) {
-        // sort future plans by their start date
         futurePlans.sort((a, b) => a.dates.first.compareTo(b.dates.first));
-        upcomingPlan =
-            futurePlans.first; // the earliest future plan is the 'upcoming' one
+        upcomingPlan = futurePlans.first;
       }
     }
 
-    // main scrollable layout
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(18.0, 15.0, 18.0, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // user greeting section
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // fixed header section
+        Padding(
+          // add padding around the fixed section
+          padding: const EdgeInsets.fromLTRB(
+            18.0,
+            15.0,
+            18.0,
+            20.0,
+          ), // adjust bottom padding as needed
+          child: Column(
+            // inner Column for fixed items
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Good morning,",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: const Color.fromARGB(255, 0, 0, 0),
-                      ),
+              // greeting row
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Good morning,",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: const Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          firstName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF14645B),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      firstName, // user's first name from auth/firestore
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF14645B),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                ],
               ),
-              // user avatar display
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey,
-                // todo: use actual photoURL when available
-                child: Icon(Icons.person, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // search bar input field
-          TextField(
-            style: GoogleFonts.poppins(),
-            decoration: InputDecoration(
-              hintText: 'Search',
-              hintStyle: GoogleFonts.poppins(),
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(color: Colors.grey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(color: Colors.grey),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 0,
-                horizontal: 20,
-              ),
-            ),
-          ),
-          const SizedBox(height: 30),
-
-          // upcoming travel plan header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Upcoming Travel Plan",
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: const Color.fromARGB(221, 0, 0, 0),
-                ),
-              ),
-              // "see all" button
-              TextButton(
-                onPressed: () {
-                  /* todo: implement see all navigation */
-                },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(50, 30),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  alignment: Alignment.centerRight,
-                ),
-                child: Text(
-                  "See all",
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF14645B),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+              const SizedBox(height: 20),
+              // search Bar
+              TextField(
+                style: GoogleFonts.poppins(),
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  hintStyle: GoogleFonts.poppins(),
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 20,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+        ),
 
-          // display the upcoming plan card (or placeholder)
-          _buildUpcomingPlanCard(upcomingPlan),
-          const SizedBox(height: 28),
+        // scrollable section
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 18.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // upcoming travel plan header
+                Text(
+                  "Upcoming Travel Plan",
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: const Color.fromARGB(221, 0, 0, 0),
+                  ),
+                ),
+                const SizedBox(height: 12),
 
-          // "all travel plans" header
-          Text(
-            "All Travel Plans",
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: const Color.fromARGB(221, 0, 0, 0),
+                // upcoming plan card
+                _buildUpcomingPlanCard(upcomingPlan),
+                const SizedBox(height: 28),
+
+                // all travel plans header
+                Text(
+                  "All Travel Plans",
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: const Color.fromARGB(221, 0, 0, 0),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // list of all plans or "no plans" message
+                allPlans.isEmpty
+                    ? _buildNoPlansWidget(
+                      message: "You have no travel plans yet.",
+                    )
+                    : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: allPlans.length,
+                      itemBuilder: (context, index) {
+                        final plan = allPlans[index];
+                        return TravelPlanItem(
+                          title: plan.name,
+                          date: _formatDateRange(plan.dates),
+                          imageUrl: plan.imageUrl ?? placeholderAvatarUrl,
+                          plan: plan,
+                        );
+                      },
+                    ),
+                const SizedBox(height: 100),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-
-          // display list of all plans or a "no plans" message
-          allPlans.isEmpty
-              ? _buildNoPlansWidget(
-                message: "You have no travel plans yet.",
-              ) // show message if list empty
-              : ListView.builder(
-                shrinkWrap: true, // needed inside singlechildscrollview
-                physics:
-                    const NeverScrollableScrollPhysics(), // disable list scrolling within outer scrollview
-                itemCount: allPlans.length,
-                itemBuilder: (context, index) {
-                  final plan = allPlans[index];
-                  // use the travelplanitem widget for each plan
-                  return TravelPlanItem(
-                    title: plan.name,
-                    date: _formatDateRange(plan.dates), // format the date range
-                    imageUrl:
-                        plan.imageUrl ??
-                        placeholderAvatarUrl, // use placeholder if no image
-                    plan: plan, // pass the full plan object
-                  );
-                },
-              ),
-          const SizedBox(height: 100), // bottom padding
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   // builds the card for the single upcoming plan
   Widget _buildUpcomingPlanCard(TravelPlan? upcomingPlan) {
+    // ... (implementation remains the same)
     final String defaultImage = placeholderImageUrl; // fallback image
 
     if (upcomingPlan == null) {
@@ -395,6 +375,7 @@ class TravelPlanScreen extends StatelessWidget {
   Widget _buildNoPlansWidget({
     String message = 'No travel plans yet. Add one!',
   }) {
+    // ... (implementation remains the same)
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
       alignment: Alignment.center,
@@ -416,127 +397,86 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
-  // main build method for the screen - handles auth state and data fetching orchestration
+  // main build method
   @override
   Widget build(BuildContext context) {
-    // get current user and provider instance
     final currentUser = FirebaseAuth.instance.currentUser;
     final travelPlanProvider = Provider.of<TravelPlanProvider>(
       context,
       listen: false,
     );
 
-    // check if user is logged in, show login prompt if not
     if (currentUser == null) {
       return Scaffold(
         body: Center(
-          child: Text("Please log in xd", style: GoogleFonts.poppins()),
+          child: Text("Please log in", style: GoogleFonts.poppins()),
         ),
       );
     }
 
-    // main screen structure
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        // avoids notches and system bars
-        bottom: false,
-        // listen to the stream of travel plans from the provider
+        bottom: false, // avoid bottom system bar overlap
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: travelPlanProvider.travelplan, // the stream source for plans
+          stream: travelPlanProvider.travelplan,
           builder: (context, planSnapshot) {
-            // handle initial loading state for plans stream
             if (planSnapshot.connectionState == ConnectionState.waiting &&
                 !planSnapshot.hasData) {
               return _buildLoadingIndicator();
             }
-            // log errors from the plan stream if any occur
             if (planSnapshot.hasError) {
               print('Plan stream error: ${planSnapshot.error}');
             }
 
-            // fetch user data using futurebuilder - runs concurrently with stream listening
+            // fetch user data
             return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              future: _fetchUserData(
-                currentUser.uid,
-              ), // the future source for user data
+              future: _fetchUserData(currentUser.uid),
               builder: (context, userSnapshot) {
-                // handle loading state for user data future
+                // loading/error handling for user data
                 if (userSnapshot.connectionState == ConnectionState.waiting) {
                   return _buildLoadingIndicator();
                 }
-                // handle errors fetching user data - this is a blocking error
                 if (userSnapshot.hasError) {
                   print('User data fetch error: ${userSnapshot.error}');
                   return _buildErrorWidget('Could not load user details.');
                 }
-                // handle case where user document doesn't exist in firestore
-                if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+
+                // process user data (default/fallback included)
+                String firstName = 'User';
+                String? photoURL = currentUser.photoURL;
+                if (userSnapshot.hasData && userSnapshot.data!.exists) {
+                  final userData = userSnapshot.data!.data();
+                  firstName = userData?['fname'] as String? ?? 'User';
+                } else {
                   print('User document not found for uid: ${currentUser.uid}');
-                  final firstName = 'User'; // fallback name
-                  final photoURL =
-                      currentUser.photoURL; // use auth photo url if available
-                  // still try to process plans even if user data is missing
-                  final allPlans =
-                      (planSnapshot.data?.docs ?? [])
-                          .map((doc) {
-                            final data = doc.data();
-                            data['id'] = doc.id; // add document id
-                            try {
-                              return TravelPlan.fromJson(data);
-                            } catch (e) {
-                              print(
-                                "Error parsing travel plan: $e, data: $data",
-                              );
-                              return null;
-                            }
-                          })
-                          .whereType<TravelPlan>()
-                          .toList();
-                  // build content with fallback user data but real plan data
-                  return _buildContent(context, firstName, photoURL, allPlans);
                 }
 
-                // if no errors, extract user data
-                final userData = userSnapshot.data!.data();
-                final firstName =
-                    userData?['fname'] as String? ??
-                    'User'; // get first name or use placeholder
-                final photoURL =
-                    currentUser
-                        .photoURL; // TO DO: maybe get from user data if stored there
-
-                // process travel plans from the stream snapshot data
-                final allPlans =
-                    (planSnapshot.data?.docs ?? []) // use empty list if no docs
+                // process plan data (default/fallback included)
+                List<TravelPlan> allPlans =
+                    (planSnapshot.data?.docs ?? [])
                         .map((doc) {
                           final data = doc.data();
-                          data['id'] =
-                              doc.id; // add document id to map for reference
+                          data['id'] = doc.id;
                           try {
-                            // parse firestore map data into a travelplan object
                             return TravelPlan.fromJson(data);
                           } catch (e) {
-                            // catch parsing errors, print details, and skip this item
                             print(
-                              "Error parsing travelplan from firestore: $e, data: $data",
+                              "Error parsing travelplan from firestore: $e, Data: $data",
                             );
-                            return null; // return null for failed parsing
+                            return null;
                           }
                         })
-                        .whereType<
-                          TravelPlan
-                        >() // filter out any nulls resulting from parsing errors
+                        .whereType<TravelPlan>()
                         .toList();
 
-                // log if there was a plan stream error but we're showing content anyway
                 if (planSnapshot.hasError) {
                   print(
                     "Displaying content despite plan stream error: ${planSnapshot.error}",
                   );
                 }
 
-                // finally, build the main content with fetched/processed data
+                // muild the main content UI
                 return _buildContent(context, firstName, photoURL, allPlans);
               },
             );
@@ -547,12 +487,12 @@ class TravelPlanScreen extends StatelessWidget {
   }
 }
 
-// widget for displaying a single travel plan item in a list
+// TravelPlanItem Widget
 class TravelPlanItem extends StatelessWidget {
   final String title;
   final String date;
   final String imageUrl;
-  final TravelPlan plan; // the actual plan data object
+  final TravelPlan plan;
 
   const TravelPlanItem({
     super.key,
@@ -562,21 +502,119 @@ class TravelPlanItem extends StatelessWidget {
     required this.plan,
   });
 
+  // method to show the options bottom sheet
+  void _showOptionsBottomSheet(
+    BuildContext context,
+    TravelPlan planToShowOptionsFor,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      // make it scrollable if content overflows
+      isScrollControlled: true,
+      // set background color and rounded top corners
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+      ),
+      builder: (BuildContext bc) {
+        // use Wrap to constrain content height
+        return Wrap(
+          children: <Widget>[
+            // optional: add a drag handle at the top
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 10.0),
+                height: 4.0,
+                width: 40.0,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+              ),
+            ),
+            // list tiles for the options
+            ListTile(
+              leading: Icon(Icons.share_outlined, color: Colors.grey.shade700),
+              title: Text('Share', style: GoogleFonts.poppins(fontSize: 15)),
+              onTap: () {
+                Navigator.pop(context); // close the bottom sheet
+                // TO DO: implement share functionality
+                print('Share tapped for plan: ${planToShowOptionsFor.id}');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.edit_outlined, color: Colors.grey.shade700),
+              title: Text('Edit', style: GoogleFonts.poppins(fontSize: 15)),
+              onTap: () {
+                Navigator.pop(context); // close the bottom sheet
+                // TO DO: implement itinerary screens
+                print('Edit tapped for plan: ${planToShowOptionsFor.id}');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: Colors.red.shade600),
+              title: Text(
+                'Delete',
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  color: Colors.red.shade600,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context); // close the bottom sheet first
+                // TO DO: implement delete functionality
+                print('Delete tapped for plan: ${planToShowOptionsFor.id}');
+              },
+            ),
+            // add some padding at the bottom for safe area insets
+            const SizedBox(height: 80),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatDateRange(List<Timestamp>? dates) {
+    // ... (implementation remains the same)
+    if (dates == null || dates.isEmpty) {
+      return 'n/a'; // handle null or empty dates
+    }
+    String start = DateFormat(
+      'MMM d',
+    ).format(dates.first.toDate()); // format start date
+    if (dates.length > 1) {
+      // check if start and end dates are the same day
+      DateTime startDate = dates.first.toDate();
+      DateTime endDate = dates.last.toDate();
+      if (startDate.year == endDate.year &&
+          startDate.month == endDate.month &&
+          startDate.day == endDate.day) {
+        return start; // return only start date if single day
+      }
+      // format end date differently if it's in the same month
+      String endFormat = (startDate.month == endDate.month) ? 'd' : 'MMM d';
+      String end = DateFormat(endFormat).format(endDate);
+      return '$start–$end'; // return range string
+    }
+    return start; // return start date if only one date exists
+  }
+
   @override
   Widget build(BuildContext context) {
-    // use container for margin instead of card elevation for flatter look
+    // ... (implementation remains the same)
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5.0),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
           vertical: 6.0,
-          horizontal: 8.0,
+          horizontal:
+              8.0, // Keep horizontal padding for list tile content alignment
         ),
         // leading widget (image)
         leading: ClipRRect(
-          borderRadius: BorderRadius.circular(10), // rounded corners for image
+          borderRadius: BorderRadius.circular(10),
           child: Image.network(
-            imageUrl, // load image from network
+            imageUrl,
             width: 58,
             height: 58,
             fit: BoxFit.cover,
@@ -623,8 +661,8 @@ class TravelPlanItem extends StatelessWidget {
         // main title text
         title: Text(
           title,
-          overflow: TextOverflow.ellipsis, // add '...' if too long
-          maxLines: 1, // limit to one line
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
           style: GoogleFonts.poppins(
             fontSize: 15.5,
             fontWeight: FontWeight.w500,
@@ -635,7 +673,8 @@ class TravelPlanItem extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
-            date, // the formatted date string
+            // date
+            _formatDateRange(plan.dates), // call formatter here
             style: GoogleFonts.poppins(
               fontSize: 12.5,
               color: Colors.grey.shade600,
@@ -646,14 +685,15 @@ class TravelPlanItem extends StatelessWidget {
         trailing: IconButton(
           icon: Icon(Icons.more_horiz, color: Colors.grey.shade500),
           onPressed: () {
-            // TO DO: implement options menu (e.g., edit, delete)
+            _showOptionsBottomSheet(context, plan);
           },
           splashRadius: 20,
           tooltip: 'More options', // accessibility tooltip
         ),
         onTap: () {
-          // TO DO: implement navigation to plan details screen
-          //  pass 'plan' object as argument
+          /* todo: implement navigation to plan details screen */
+          // potentially pass 'plan' object as argument
+          print('Tapped on plan item: ${plan.id}');
         },
         tileColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
