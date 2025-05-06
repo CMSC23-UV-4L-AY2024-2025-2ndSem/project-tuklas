@@ -8,6 +8,9 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/travel_plan_provider.dart';
 import '../models/travel_plan_model.dart';
+import 'package:project_TUKLAS/screens/itinerary.dart';
+
+
 
 class TravelPlanScreen extends StatelessWidget {
   const TravelPlanScreen({super.key});
@@ -502,6 +505,7 @@ class TravelPlanItem extends StatelessWidget {
     required this.plan,
   });
 
+
   // method to show the options bottom sheet
   void _showOptionsBottomSheet(
     BuildContext context,
@@ -814,9 +818,12 @@ class TravelPlanItem extends StatelessWidget {
           tooltip: 'More options', // accessibility tooltip
         ),
         onTap: () {
-          /* todo: implement navigation to plan details screen */
-          // potentially pass 'plan' object as argument
-          print('Tapped on plan item: ${plan.id}');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ItineraryScreen(travelPlan: plan),
+            ),
+          );
         },
         tileColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
