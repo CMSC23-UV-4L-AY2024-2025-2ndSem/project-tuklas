@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/models/travel_plan_model.dart';
 import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
 import 'package:project_TUKLAS/screens/addlocation_page.dart';
+import 'package:project_TUKLAS/screens/map_search_page.dart';
 import 'package:provider/provider.dart';
 
 //this page allows the user to add a new travel plan
@@ -60,20 +61,30 @@ class _AddtravelPageState extends State<AddtravelPage> {
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 40),
-              Row(children: [closeButton, SizedBox(width: 20), title]),
-              tripNameField,
-              findlocation,
-              dateFields,
-              SizedBox(height: 20),
-              addTravelBuddy,
-              SizedBox(height: 20),
-              Center(child: addPlanButton),
-              SizedBox(height: 20),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 40),
+                Row(
+                  children: [
+                    closeButton,
+                    const SizedBox(width: 15),
+                    Expanded(child: title),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                tripNameField,
+                findlocation,
+                dateFields,
+                const SizedBox(height: 20),
+                addTravelBuddy,
+                const SizedBox(height: 20),
+                Center(child: addPlanButton),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -95,30 +106,27 @@ class _AddtravelPageState extends State<AddtravelPage> {
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       SizedBox(
-        width: 300, // Limit the overall width
+        width: 300,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: EdgeInsets.symmetric(vertical: 10),
           child: TextFormField(
             controller: _tripNameController,
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              fontSize: 15,
+              fontSize: 20,
               color: Color(0xFFCA4A0C),
               fontWeight: FontWeight.bold,
             ),
             decoration: InputDecoration(
               hintText: "Enter trip name",
               hintStyle: GoogleFonts.poppins(
-                fontSize: 15,
+                fontSize: 20,
                 color: Color(0xFFCA4A0C),
                 fontWeight: FontWeight.bold,
               ),
               border: UnderlineInputBorder(),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: Color(0xFFCA4A0C), //orange colored field or trip name
-                  width: 2,
-                ),
+                borderSide: BorderSide(color: Color(0xFFCA4A0C), width: 2),
               ),
             ),
             validator: (value) {
@@ -136,75 +144,82 @@ class _AddtravelPageState extends State<AddtravelPage> {
     ],
   );
 
-  //field that pop ups a new screen for location input
-  Widget get findlocation => GestureDetector(
-    onTap: () async {
-      // navigate to full-screen input and wait for result
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) =>
-                  AddLocationPage(initialText: _locationController.text),
-        ),
-      );
+  // field that pop ups a new screen for location input
+  Widget get findlocation => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: InkWell(
+      // inkwell widget for tap feedback
+      onTap: () async {
+        print("Navigating to MapSearchPage...");
+        // navigate to the new MapSearchPage and wait for a result
+        final result = await Navigator.push<Map<String, dynamic>>(
+          // Expect a Map result
+          context,
+          MaterialPageRoute(builder: (context) => const MapSearchPage()),
+        );
 
-      // set returned text back to the main field
-      if (result != null) {
-        _locationController.text = result['name'] as String;
-        lat = result['latitude'] as double;
-        long = result['longitude'] as double;
-      }
-    },
-    child: AbsorbPointer(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: TextFormField(
-          controller: _locationController,
-          decoration: InputDecoration(
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            label: Text("Where to?"),
-            labelStyle: GoogleFonts.poppins(
-              fontSize: 15,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-            hintText: "Search a location",
-            hintStyle: GoogleFonts.poppins(fontSize: 16, color: Colors.black),
-          ),
-          onTap: () async {
-            //push new screen to select location
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) =>
-                        AddLocationPage(initialText: "Search a location"),
+        // handles the returned result
+        if (result != null && mounted) {
+          print("Received location result: $result");
+          // ensures the result contains the expected keys and types
+          if (result.containsKey('name') &&
+              result.containsKey('latitude') &&
+              result.containsKey('longitude') &&
+              result['name'] is String &&
+              result['latitude'] is double &&
+              result['longitude'] is double) {
+            setState(() {
+              _locationController.text = result['name'] as String;
+              lat = result['latitude'] as double?; // use nullable assignment
+              long = result['longitude'] as double?; // use nullable assignment
+            });
+          } else {
+            // checker
+            print("Received invalid location result format: $result");
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Invalid location data received."),
+                backgroundColor: Colors.orange,
               ),
             );
-
-            if (result != null) {
-              _locationController.text = result['name'] as String;
-              lat = result['latitude'] as double;
-              long = result['longitude'] as double;
-            }
-          },
-          validator: (value) {
-            if (value == null) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text("Please enter location")));
-            } else {
-              return;
-            }
-          },
+          }
+        } else {
+          print("No location selected or page dismissed.");
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          labelText: "Where to?",
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 15,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
+        ),
+        child: Text(
+          _locationController.text.isEmpty
+              ? "Search or pick a location"
+              : _locationController.text,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            color:
+                _locationController.text.isEmpty
+                    ? Colors.grey.shade600
+                    : Colors.black,
+          ),
         ),
       ),
     ),
@@ -212,7 +227,7 @@ class _AddtravelPageState extends State<AddtravelPage> {
 
   //start and end date fields in one row
   Widget get dateFields => Padding(
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    padding: EdgeInsets.symmetric(vertical: 10),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -268,7 +283,7 @@ class _AddtravelPageState extends State<AddtravelPage> {
 
   // button to add travel buddy
   Widget get addTravelBuddy => Padding(
-    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    padding: EdgeInsets.symmetric(vertical: 10),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -306,80 +321,134 @@ class _AddtravelPageState extends State<AddtravelPage> {
     onPressed: () async {
       print("Adding new travel plan...");
 
-      if (_formKey.currentState!.validate()) {
-        // validate location
-        if (lat == null || long == null) {
-          //no location selected
+      // validate Form
+      if (!_formKey.currentState!.validate()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Please fill in all required fields.")),
+        );
+        return; // stop if form is invalid
+      }
+
+      // validate Location
+      if (lat == null || long == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Please select a valid location.")),
+        );
+        return; // stop if location is invalid
+      }
+
+      // validate and parse dates
+      DateTime? startDate;
+      DateTime? endDate;
+      try {
+        // check if dates are selected
+        if (_startDateController.text.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Invalid coordinates on selected location!"),
-            ),
+            SnackBar(content: Text("Please select a start date.")),
           );
           return;
         }
+        if (_endDateController.text.isEmpty) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Please select an end date.")));
+          return;
+        }
+
+        startDate = DateTime.parse(_startDateController.text);
+        endDate = DateTime.parse(_endDateController.text);
+
+        // ensure end date is not before start date
+        if (endDate.isBefore(startDate)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("End date cannot be before start date.")),
+          );
+          return;
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Invalid date format selected.")),
+        );
+        print("Date parsing error: $e");
+        return; // stop if dates are invalid
+      }
+
+      // compute date range
+      final List<Timestamp> allDates = [];
+      DateTime currentDate = startDate;
+      while (currentDate.isBefore(endDate.add(const Duration(days: 1)))) {
+        // only store the date part (set time to 00:00:00)
+        DateTime dateOnly = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day,
+        );
+        allDates.add(Timestamp.fromDate(dateOnly));
+        currentDate = currentDate.add(
+          const Duration(days: 1),
+        ); // move to the next day
+      }
+
+      // gets user and save to Firebase
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        print("User id: ${user.uid}");
+        print("Trip name: ${_tripNameController.text}");
+        print("Location name: ${_locationController.text}");
+        print("Coordinates: [$lat, $long]");
+        print("Calculated Dates (Timestamps): $allDates");
+
+        // create the travel plan object with the computed dates
+        TravelPlan newPlan = TravelPlan(
+          name: _tripNameController.text.trim(), // trim whitespace
+          dates: allDates, // use the calculated array of dates
+          location: GeoPoint(lat!, long!),
+          userId: user.uid,
+        );
+
         try {
-          //parse dates
-          final DateTime startDate = DateTime.parse(_startDateController.text);
-          final DateTime endDate = DateTime.parse(_endDateController.text);
+          // use the provider to add the plan
+          await context.read<TravelPlanProvider>().addPlan(newPlan);
 
-          // add plan to database referenced to user
-          final user = FirebaseAuth.instance.currentUser;
-
-          // to check output
-          print("Trip name: ${_tripNameController.text}");
-          print("Start date: $startDate");
-          print("End date: $endDate");
-          print(
-            "Location name: ${_locationController.text}",
-          ); // must be converted into coordinates
-          print("Coordinates: [$lat, $long]");
-
-          if (user != null) {
-            print("User id: ${user.uid}");
-
-            TravelPlan newPlan = TravelPlan(
-              name: _tripNameController.text,
-              dates: [
-                Timestamp.fromDate(startDate),
-                Timestamp.fromDate(endDate),
-              ],
-              location: GeoPoint(
-                lat!,
-                long!,
-              ), //_locationcontroller has address name, convert it back to coordinates when saving
-              userId: user.uid, //adding userId when saving travel plan
-            );
-
-            //add item to travel plan provider
-            context.read<TravelPlanProvider>().addPlan(newPlan);
-            //display success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Item successfully added to travel plans!"),
+          // display success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "${_tripNameController.text.trim()} plan added successfully!",
               ),
-            );
+              backgroundColor: Colors.green,
+            ),
+          );
 
-            //reset formfields
-            _resetForm();
+          // reset form fields
+          _resetForm();
 
-            //navigate back to previous page
+          // if the widget is still in the tree, navigate back to the previous page
+          if (mounted) {
             Navigator.pop(context);
           }
         } catch (e) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("invalid date format.")));
-          print("Date parsing error: $e");
+          print("Error adding plan via provider: $e");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Failed to add travel plan. Please try again."),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       } else {
+        print("Error: User not logged in.");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Please enter all required fields!")),
+          SnackBar(
+            content: Text("Error: User not logged in. Please log in again."),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     },
     child: Text(
       "Add",
-      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.bold),
+      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
     ),
   );
 
