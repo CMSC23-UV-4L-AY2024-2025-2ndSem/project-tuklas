@@ -8,6 +8,9 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/travel_plan_provider.dart';
 import '../models/travel_plan_model.dart';
+import 'package:project_TUKLAS/screens/itinerary.dart';
+import 'user_profile.dart';
+
 
 class TravelPlanScreen extends StatelessWidget {
   const TravelPlanScreen({super.key});
@@ -104,7 +107,6 @@ class TravelPlanScreen extends StatelessWidget {
             // inner Column for fixed items
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // greeting row
               Row(
                 children: [
                   Expanded(
@@ -120,7 +122,7 @@ class TravelPlanScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          firstName,
+                          firstName, // Ensure firstName is defined in your code
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -130,10 +132,21 @@ class TravelPlanScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, color: Colors.white),
+                  GestureDetector(
+                    onTap: () {
+                      // Navigate to the UserProfilePage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => UserProfilePage(username: 'your_username_here'), // Pass the username or any identifier
+                        ),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey,
+                      child: Icon(Icons.person, color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -502,6 +515,7 @@ class TravelPlanItem extends StatelessWidget {
     required this.plan,
   });
 
+
   // method to show the options bottom sheet
   void _showOptionsBottomSheet(
     BuildContext context,
@@ -814,9 +828,12 @@ class TravelPlanItem extends StatelessWidget {
           tooltip: 'More options', // accessibility tooltip
         ),
         onTap: () {
-          /* todo: implement navigation to plan details screen */
-          // potentially pass 'plan' object as argument
-          print('Tapped on plan item: ${plan.id}');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ItineraryScreen(travelPlan: plan),
+            ),
+          );
         },
         tileColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

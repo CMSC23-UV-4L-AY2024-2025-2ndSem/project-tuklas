@@ -48,17 +48,19 @@ class TravelPlanProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // method to edit plans and update in Firestore
-  Future<void> editPlan(
-    String id,
-    String name,
-    List<String> dates,
-    GeoPoint location,
-  ) async {
-    String message = await firebaseService.editPlan(id, name, dates, location);
-    print(message);
-    notifyListeners();
-  }
+  // method to edit plans and update in Firestore (using the provided editPlan)
+    Future<void> editPlan(
+      String id,
+      String name,
+      List<Timestamp> dates, // ✅ make sure it's Timestamp
+      GeoPoint location,
+    ) async {
+      String message = await firebaseService.editPlan(id, name, dates, location);
+      print(message);
+      notifyListeners();
+    }
+
+
 
   // method to delete plans and update in Firestore
   Future<void> deletePlan(String id) async {
