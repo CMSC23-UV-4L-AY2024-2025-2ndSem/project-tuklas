@@ -57,4 +57,10 @@ class FirebaseItineraryApi {
       return "Error on ${e.code}: ${e.message}";
     }
   }
+
+  Future<void> createItineraries(dateRange, travelPlanId) async {
+    for(int i = 0; i < dateRange.length; i++){
+      await addItinerary(travelPlanId, dateRange[i]);
+    }
+  }
 }

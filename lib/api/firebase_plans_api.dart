@@ -22,7 +22,7 @@ class FirebasePlansApi {
           .collection('plans')
           .doc(plan['id'])
           .set(plan); // create new document in plan collection
-      return "Plan added successfully!";
+      return (plan['id']);
     } on FirebaseException catch (e) {
       return "Error on ${e.code}: ${e.message}";
     }

@@ -42,10 +42,11 @@ class TravelPlanProvider with ChangeNotifier {
   }
 
   // method to add plans and store in Firestore
-  Future<void> addPlan(TravelPlan plan) async {
-    String message = await firebaseService.addPlan(plan.toJson());
-    print(message);
+  Future<String> addPlan(TravelPlan plan) async {
+    String id = await firebaseService.addPlan(plan.toJson());
+    print(id);
     notifyListeners();
+    return id;
   }
 
   // method to edit plans and update in Firestore

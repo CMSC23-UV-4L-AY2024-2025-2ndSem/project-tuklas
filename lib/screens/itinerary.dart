@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
 import 'package:provider/provider.dart';
-import '../models/travel_plan_model.dart';
 import '../models/itinerary_model.dart';
+import '../models/travel_plan_model.dart';
 import '../providers/itinerary_provider.dart';
 
 class ItineraryScreen extends StatefulWidget {
@@ -46,19 +45,12 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
     if (location == null) return 'Unknown location';
     return 'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
   }
-  
-  void createItineraries(dateRange, travelPlanId) async {
-    dateRange.map((date) async {
-      await context.read<ItineraryProvider>().firebaseService.addItinerary(travelPlanId, date);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final dateRange = _generateDateRange(widget.travelPlan.dates);
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
     
-    createItineraries(dateRange, widget.travelPlan.id);
 
     return Scaffold(
       body: Column(
@@ -132,7 +124,7 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           ),
           // Itinerary Section
           Form(
-          key: _formKey,
+          key: formKey,
           child: Expanded(
             child: dateRange.isEmpty
                 ? Center(child: Text("No dates available for this trip.", style: GoogleFonts.poppins()))
@@ -194,7 +186,7 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                                 SizedBox(height: 8),
                                 ElevatedButton(
                                   onPressed: () async {
-                                    _formKey.currentState!.save();
+                                    formKey.currentState!.save();
                                     // edit itinerary
                                   },
                                   style: ElevatedButton.styleFrom(

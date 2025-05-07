@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/models/travel_plan_model.dart';
+import 'package:project_TUKLAS/providers/itinerary_provider.dart';
 import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
 import 'package:project_TUKLAS/screens/addlocation_page.dart';
 import 'package:project_TUKLAS/screens/map_search_page.dart';
@@ -36,6 +37,21 @@ class _AddtravelPageState extends State<AddtravelPage> {
     _endDateController.clear();
     lat = null;
     long = null;
+  }
+
+  List<DateTime> _generateDateRange(List<Timestamp> timestamps) {
+    if (timestamps.isEmpty) return [];
+    timestamps.sort((a, b) => a.toDate().compareTo(b.toDate()));
+    DateTime start = timestamps.first.toDate();
+    DateTime end = timestamps.last.toDate();
+
+    List<DateTime> dates = [];
+    DateTime current = start;
+    while (!current.isAfter(end)) {
+      dates.add(current);
+      current = current.add(Duration(days: 1));
+    }
+    return dates;
   }
 
   // method to add a date using datepicker
@@ -408,7 +424,8 @@ class _AddtravelPageState extends State<AddtravelPage> {
 
         try {
           // use the provider to add the plan
-          await context.read<TravelPlanProvider>().addPlan(newPlan);
+          String id = await context.read<TravelPlanProvider>().addPlan(newPlan);
+          await context.read<ItineraryProvider>().createItineraries(_generateDateRange(newPlan.dates), id);
 
           // display success message
           ScaffoldMessenger.of(context).showSnackBar(
