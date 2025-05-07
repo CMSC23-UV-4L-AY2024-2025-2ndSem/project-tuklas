@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
+import 'package:provider/provider.dart';
 import '../models/travel_plan_model.dart';
+import '../models/itinerary_model.dart';
+import '../providers/itinerary_provider.dart';
 
-class ItineraryScreen extends StatelessWidget {
+class ItineraryScreen extends StatefulWidget {
   final TravelPlan travelPlan;
+  const ItineraryScreen({super.key, required this.travelPlan});
+  
+  @override
+  State<ItineraryScreen> createState() => _ItineraryScreenState();
+}
 
-  const ItineraryScreen({Key? key, required this.travelPlan}) : super(key: key);
-
+class _ItineraryScreenState extends State<ItineraryScreen> {
   List<DateTime> _generateDateRange(List<Timestamp> timestamps) {
     if (timestamps.isEmpty) return [];
     timestamps.sort((a, b) => a.toDate().compareTo(b.toDate()));
@@ -23,24 +32,43 @@ class ItineraryScreen extends StatelessWidget {
     return dates;
   }
 
+  int getNumberOfDays(List<Timestamp> timestamps) {
+    if (timestamps.isEmpty) return 0;
+
+    timestamps.sort((a, b) => a.toDate().compareTo(b.toDate()));
+    DateTime start = timestamps.first.toDate();
+    DateTime end = timestamps.last.toDate();
+
+    return end.difference(start).inDays + 1;
+  }
+
   String _formatLocation(GeoPoint? location) {
     if (location == null) return 'Unknown location';
     return 'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
   }
+  
+  void createItineraries(dateRange, travelPlanId) async {
+    dateRange.map((date) async {
+      await context.read<ItineraryProvider>().firebaseService.addItinerary(travelPlanId, date);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final dateRange = _generateDateRange(travelPlan.dates);
+    final dateRange = _generateDateRange(widget.travelPlan.dates);
+    final _formKey = GlobalKey<FormState>();
+    
+    createItineraries(dateRange, widget.travelPlan.id);
 
     return Scaffold(
       body: Column(
         children: [
-          // Header Section
           Container(
+            height: 200,
             color: const Color.fromARGB(255, 235, 76, 3),
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 IconButton(
                   icon: Icon(Icons.arrow_back, color: Colors.white),
@@ -49,51 +77,65 @@ class ItineraryScreen extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          travelPlan.name,
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                        Text(
-                          _formatLocation(travelPlan.location),
-                          style: TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                        if (dateRange.isNotEmpty)
-                          Text(
-                            '${DateFormat.yMMMd().format(dateRange.first)} - ${DateFormat.yMMMd().format(dateRange.last)}',
-                            style: TextStyle(fontSize: 14, color: Colors.white70),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                widget.travelPlan.name,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                              Text(
+                                _formatLocation(widget.travelPlan.location),
+                                style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                              ),
+                              if (dateRange.isNotEmpty)
+                                Text(
+                                  '${DateFormat.yMMMd().format(dateRange.first)} - ${DateFormat.yMMMd().format(dateRange.last)}',
+                                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
+                                ),
+                            ],
                           ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(255, 5, 113, 112),
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              child: Text("Share", style: GoogleFonts.poppins()),
+                            ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(Icons.more_vert, color: Colors.white),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 5, 113, 112),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      child: Text("Share"),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.more_vert, color: Colors.white),
-                    ),
-                  ],
                 ),
               ],
             ),
           ),
           // Itinerary Section
-          Expanded(
+          Form(
+          key: _formKey,
+          child: Expanded(
             child: dateRange.isEmpty
-                ? Center(child: Text("No dates available for this trip."))
+                ? Center(child: Text("No dates available for this trip.", style: GoogleFonts.poppins()))
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -107,31 +149,77 @@ class ItineraryScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   DateFormat.yMMMMEEEEd().format(date),
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)
                                 ),
                                 SizedBox(height: 8),
                                 ElevatedButton(
-                                  onPressed: () {},
-                                  child: Text("Add Location"),
+                                  onPressed: () {
+                                    // open modal to enter location(text)
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(250, 40),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                    backgroundColor: const Color.fromARGB(255, 233, 232, 232),
+                                    foregroundColor: const Color.fromARGB(255, 65, 65, 65)
+                                  ),
+                                  child: Row( 
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.pin_drop),
+                                      SizedBox(width:10),
+                                      Text("Add Location", style: GoogleFonts.poppins(color: const Color.fromARGB(255, 65, 65, 65))),
+                                    ]
+                                    )
                                 ),
                                 SizedBox(height: 8),
-                                TextField(
+                                TextFormField(
                                   decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: const Color.fromARGB(255, 233, 232, 232))
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: const Color.fromARGB(255, 233, 232, 232)),
+                                    ),
+                                    filled: true,
+                                    fillColor: const Color.fromARGB(255, 222, 222, 222),
                                     hintText: 'Add notes here',
+                                    hintStyle: GoogleFonts.poppins(fontSize: 14)
                                   ),
+                                  onSaved: (value) => setState(() => value = value),
                                   maxLines: 3,
                                 ),
                                 SizedBox(height: 8),
-                                Column(
-                                  children: List.generate(4, (index) {
-                                    return CheckboxListTile(
-                                      value: false,
-                                      onChanged: (_) {},
-                                      title: Text('Checklist item ${index + 1}'),
-                                    );
-                                  }),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    _formKey.currentState!.save();
+                                    // edit itinerary
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(100, 30),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                    backgroundColor: Color.fromARGB(255, 5, 113, 112),
+                                  ),
+                                  child: Text("Save", style: GoogleFonts.poppins(color: const Color.fromARGB(255, 255, 255, 255))),
                                 ),
+                                // ---- CHECKLIST SECTION ---- not yet implemented T-T
+                                // Column(
+                                //   children: List.generate(4, (index) {
+                                //     return CheckboxListTile(
+                                //       value: checkList[index],
+                                //       onChanged: (value) {
+                                //         setState(() {
+                                //           checkList[index] = value!;
+                                //         });
+                                //       },
+                                //       title: Text('Checklist item ${index + 1}', style: GoogleFonts.poppins()),
+                                //     );
+                                //   }),
+                                // ),
                               ],
                             ),
                           ),
@@ -140,6 +228,7 @@ class ItineraryScreen extends StatelessWidget {
                     ),
                   ),
           ),
+          )
         ],
       ),
     );

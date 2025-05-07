@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/providers/itinerary_provider.dart';
 import '../../providers/user_profile_provider.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_interests_page.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_styles_page.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
         Provider<UserAuthProvider>(create: (_) => UserAuthProvider()),
         Provider<UserProfileProvider>(create: (_) => UserProfileProvider()),
         ChangeNotifierProvider(create: (_) => TravelPlanProvider()),
+        ChangeNotifierProvider(create: (_) => ItineraryProvider()),
       ],
       child: const MyApp(),
     ),
