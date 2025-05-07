@@ -32,21 +32,21 @@ class FirebasePlansApi {
   Future<String> editPlan(
     String id,
     String name,
-    List<String> dates,
+    List<Timestamp> dates,
     GeoPoint location,
   ) async {
     try {
-      await db.collection('plans').doc(id).update({
-        'id': id,
+      await FirebaseFirestore.instance.collection('plans').doc(id).update({
         'name': name,
         'dates': dates,
         'location': location,
       });
-      return "Successfully edited $name travel plan!";
-    } on FirebaseException catch (e) {
-      return "Error on ${e.code}: ${e.message}";
+      return 'Plan updated successfully';
+    } catch (e) {
+      return 'Error updating plan: $e';
     }
   }
+
 
   //method to delete existing travel plan in db
   Future<String> deletePlan(String id) async {

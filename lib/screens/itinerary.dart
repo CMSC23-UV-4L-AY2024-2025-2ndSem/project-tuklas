@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
+import 'package:project_TUKLAS/screens/map_search_page.dart';
+import 'package:provider/provider.dart';
 import '../models/travel_plan_model.dart';
 
-class ItineraryScreen extends StatelessWidget {
+class ItineraryScreen extends StatefulWidget {
   final TravelPlan travelPlan;
 
   const ItineraryScreen({Key? key, required this.travelPlan}) : super(key: key);
 
+  @override
+  _ItineraryScreenState createState() => _ItineraryScreenState();
+}
+
+class _ItineraryScreenState extends State<ItineraryScreen> {
   List<DateTime> _generateDateRange(List<Timestamp> timestamps) {
     if (timestamps.isEmpty) return [];
     timestamps.sort((a, b) => a.toDate().compareTo(b.toDate()));
@@ -30,7 +38,7 @@ class ItineraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateRange = _generateDateRange(travelPlan.dates);
+    final dateRange = _generateDateRange(widget.travelPlan.dates);
 
     return Scaffold(
       body: Column(
@@ -53,11 +61,11 @@ class ItineraryScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          travelPlan.name,
+                          widget.travelPlan.name,
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         Text(
-                          _formatLocation(travelPlan.location),
+                          _formatLocation(widget.travelPlan.location),
                           style: TextStyle(fontSize: 14, color: Colors.white),
                         ),
                         if (dateRange.isNotEmpty)
@@ -82,8 +90,10 @@ class ItineraryScreen extends StatelessWidget {
                       child: Text("Share"),
                     ),
                     IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.more_vert, color: Colors.white),
+                      onPressed: () {
+                          _showEditModal(context, widget.travelPlan);
+                      },
+                      icon: Icon(Icons.edit, color: Colors.white),
                     ),
                   ],
                 ),
@@ -144,4 +154,147 @@ class ItineraryScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showEditModal(BuildContext context, TravelPlan travelPlan) {
+    final nameController = TextEditingController(text: travelPlan.name);
+    final locationController = TextEditingController(
+      text: travelPlan.location != null
+          ? 'Lat: ${travelPlan.location!.latitude}, Lng: ${travelPlan.location!.longitude}'
+          : '',
+    );
+    final startDateController = TextEditingController(
+      text: travelPlan.dates.isNotEmpty
+          ? DateFormat.yMMMd().format(travelPlan.dates.first.toDate())
+          : '',
+    );
+
+    final endDateController = TextEditingController(
+      text: travelPlan.dates.isNotEmpty
+          ? DateFormat.yMMMd().format(travelPlan.dates.last.toDate())
+          : '',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 16,
+            right: 16,
+            top: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Edit Trip', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(height: 12),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'Trip Name'),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: locationController,
+                decoration: InputDecoration(labelText: 'Location'),
+                readOnly: true,
+                onTap: () async {
+                  final result = await Navigator.push<Map<String, dynamic>>(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MapSearchPage()),
+                  );
+                  if (result != null &&
+                      result.containsKey('latitude') &&
+                      result.containsKey('longitude')) {
+                    setState(() {
+                      locationController.text =
+                          'Lat: ${result['latitude']}, Lng: ${result['longitude']}';
+                    });
+                  }
+                },
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: startDateController,
+                readOnly: true,
+                decoration: InputDecoration(labelText: 'Start Date'),
+                onTap: () async {
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      startDateController.text = DateFormat.yMMMd().format(picked);
+                    });
+                  }
+                },
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: endDateController,
+                readOnly: true,
+                decoration: InputDecoration(labelText: 'End Date'),
+                onTap: () async {
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      endDateController.text = DateFormat.yMMMd().format(picked);
+                    });
+                  }
+                },
+              ),
+              SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () async {
+                  final startDate = DateFormat.yMMMd().parse(startDateController.text);
+                  final endDate = DateFormat.yMMMd().parse(endDateController.text);
+
+                  final updatedPlan = TravelPlan(
+                    id: travelPlan.id,
+                    name: nameController.text,
+                    dates: [
+                      Timestamp.fromDate(startDate),
+                      Timestamp.fromDate(endDate),
+                    ],
+                    location: GeoPoint(
+                      double.parse(locationController.text.split(',')[0].split(':')[1].trim()),
+                      double.parse(locationController.text.split(',')[1].split(':')[1].trim()),
+                    ),
+                    userId: travelPlan.userId,
+                    imageUrl: travelPlan.imageUrl,
+                  );
+
+                  // Update plan using the TravelPlanProvider
+                  await context.read<TravelPlanProvider>().editPlan(
+                    updatedPlan.id!,
+                    updatedPlan.name,
+                    updatedPlan.dates,
+                    updatedPlan.location!,
+                  );
+
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: Text('Save Changes'),
+              ),
+              SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 }
