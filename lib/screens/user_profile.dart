@@ -37,7 +37,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     'Solo Travel',
     'Group Travel',
     'Day Trip Travel',
-    'Others'
+    'Others',
   ];
 
   final List<String> travelInterests = [
@@ -53,7 +53,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     'Night Life',
     'Food Trips',
     'Cafes',
-    'Others'
+    'Others',
   ];
 
   @override
@@ -62,64 +62,69 @@ class _UserProfilePageState extends State<UserProfilePage> {
     _loadUserProfile();
   }
 
-Future<void> _loadUserProfile() async {
-  try {
-    final profile = await context.read<UserProfileProvider>().fetchUserProfileOnce();
-
-    if (!mounted) return;
-
-    setState(() {
-      nameController.text = profile.name;
-      usernameController.text = profile.username;
-      selectedStyles = List<String>.from(profile.styles ?? []);
-      selectedInterests = List<String>.from(profile.interests ?? []);
-      if (profile.imageBase64 != null && profile.imageBase64!.isNotEmpty) {
-        pickedFileBytes = base64Decode(profile.imageBase64!);
-      }
-    });
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load profile: $e')),
-    );
-  }
-}
-
-Future<void> _saveProfile() async {
-  if (_formKey.currentState!.validate()) {
-    final newUsername = usernameController.text.trim();
-    final newName = nameController.text.trim();
-    final base64Image = pickedFileBytes != null ? base64Encode(pickedFileBytes!) : null;
-
+  Future<void> _loadUserProfile() async {
     try {
-      // update the profile with the new data
-      await context.read<UserProfileProvider>().firebaseService.updateUserProfile(
-        username: newUsername,
-        name: newName,
-        styles: selectedStyles,
-        interests: selectedInterests,
-        imageBase64: base64Image,
-      );
+      final profile =
+          await context.read<UserProfileProvider>().fetchUserProfileOnce();
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
-      );
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => MainScreen()),
-        (route) => false,
-      );
+      setState(() {
+        nameController.text = profile.name;
+        usernameController.text = profile.username;
+        selectedStyles = List<String>.from(profile.styles ?? []);
+        selectedInterests = List<String>.from(profile.interests ?? []);
+        if (profile.imageBase64 != null && profile.imageBase64!.isNotEmpty) {
+          pickedFileBytes = base64Decode(profile.imageBase64!);
+        }
+      });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving profile: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load profile: $e')));
     }
   }
-}
+
+  Future<void> _saveProfile() async {
+    if (_formKey.currentState!.validate()) {
+      final newUsername = usernameController.text.trim();
+      final newName = nameController.text.trim();
+      final base64Image =
+          pickedFileBytes != null ? base64Encode(pickedFileBytes!) : null;
+
+      try {
+        // update the profile with the new data
+        await context
+            .read<UserProfileProvider>()
+            .firebaseService
+            .updateUserProfile(
+              username: newUsername,
+              name: newName,
+              styles: selectedStyles,
+              interests: selectedInterests,
+              imageBase64: base64Image,
+            );
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => MainScreen()),
+          (route) => false,
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving profile: $e')));
+      }
+    }
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
@@ -140,7 +145,10 @@ Future<void> _saveProfile() async {
       backgroundColor: const Color(0xFFDCEDE1),
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_rounded, color: Color(0xFF027572)),
+        icon: const Icon(
+          Icons.arrow_back_ios_rounded,
+          color: Color(0xFF027572),
+        ),
         onPressed: () {
           Navigator.pushAndRemoveUntil(
             context,
@@ -161,8 +169,7 @@ Future<void> _saveProfile() async {
       actions: [
         IconButton(
           icon: const Icon(Icons.more_vert, color: Color(0xFF027572)),
-          onPressed: () {
-          },
+          onPressed: () {},
         ),
       ],
     );
@@ -176,14 +183,15 @@ Future<void> _saveProfile() async {
           radius: 70,
           backgroundColor: const Color(0xFF69B3AE),
           child: ClipOval(
-            child: pickedFileBytes != null
-                ? Image.memory(
-                    pickedFileBytes!,
-                    width: 140,
-                    height: 140,
-                    fit: BoxFit.cover,
-                  )
-                : const Icon(Icons.person, size: 50, color: Colors.white),
+            child:
+                pickedFileBytes != null
+                    ? Image.memory(
+                      pickedFileBytes!,
+                      width: 140,
+                      height: 140,
+                      fit: BoxFit.cover,
+                    )
+                    : const Icon(Icons.person, size: 50, color: Colors.white),
           ),
         ),
         Positioned(
@@ -217,7 +225,10 @@ Future<void> _saveProfile() async {
           borderRadius: BorderRadius.circular(12),
         ),
         labelText: label,
-        labelStyle: GoogleFonts.poppins(fontSize: 16, color: const Color(0x80027572)),
+        labelStyle: GoogleFonts.poppins(
+          fontSize: 16,
+          color: const Color(0x80027572),
+        ),
         hintText: hint,
         hintStyle: GoogleFonts.poppins(
           fontSize: 16,
@@ -241,27 +252,26 @@ Future<void> _saveProfile() async {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
-      children: options.map((option) {
-        final isSelected = selectedOptions.contains(option);
-        return ChoiceChip(
-          label: Text(option),
-          selected: isSelected,
-          onSelected: (_) => onSelected(option),
-          selectedColor: const Color(0xFF027572),
-          backgroundColor: Colors.transparent,
-          labelStyle: GoogleFonts.poppins(
-            color: isSelected ? Colors.white : const Color(0xFF027572),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFF027572)),
-          ),
-        );
-      }).toList(),
+      children:
+          options.map((option) {
+            final isSelected = selectedOptions.contains(option);
+            return ChoiceChip(
+              label: Text(option),
+              selected: isSelected,
+              onSelected: (_) => onSelected(option),
+              selectedColor: const Color(0xFF027572),
+              backgroundColor: Colors.transparent,
+              labelStyle: GoogleFonts.poppins(
+                color: isSelected ? Colors.white : const Color(0xFF027572),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFF027572)),
+              ),
+            );
+          }).toList(),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -346,7 +356,10 @@ Future<void> _saveProfile() async {
               ElevatedButton(
                 onPressed: _saveProfile,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 80,
+                    vertical: 15,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
