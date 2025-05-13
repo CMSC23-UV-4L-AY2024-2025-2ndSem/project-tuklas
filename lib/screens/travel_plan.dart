@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/travel_plan_provider.dart';
 import '../models/travel_plan_model.dart';
 import 'package:project_TUKLAS/screens/itinerary.dart';
+import 'user_profile.dart';
 
 class TravelPlanScreen extends StatelessWidget {
   const TravelPlanScreen({super.key});
@@ -130,6 +131,91 @@ class TravelPlanScreen extends StatelessWidget {
         // non-scrollable header part
         _GreetingHeader(firstName: firstName, photoURL: photoURL),
         // scrollable part
+        // fixed header section
+        Padding(
+          // add padding around the fixed section
+          padding: const EdgeInsets.fromLTRB(
+            18.0,
+            15.0,
+            18.0,
+            20.0,
+          ), // adjust bottom padding as needed
+          child: Column(
+            // inner Column for fixed items
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Good morning,",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: const Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          firstName, // Ensure firstName is defined in your code
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF14645B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      // Navigate to the UserProfilePage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => UserProfilePage(
+                                username: 'your_username_here',
+                              ), // Pass the username or any identifier
+                        ),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey,
+                      child: Icon(Icons.person, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // search Bar
+              TextField(
+                style: GoogleFonts.poppins(),
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  hintStyle: GoogleFonts.poppins(),
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -876,6 +962,9 @@ class TravelPlanItem extends StatelessWidget {
             // show loading indicator while image loads
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child; // image loaded
+              if (loadingProgress == null) {
+                return child; // return image if loaded
+              }
               return Container(
                 width: 58,
                 height: 58,
