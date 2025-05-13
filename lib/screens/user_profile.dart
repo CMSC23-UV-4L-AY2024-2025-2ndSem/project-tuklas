@@ -103,7 +103,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
               name: newName,
               styles: selectedStyles,
               interests: selectedInterests,
-              imageBase64: base64Image,
             );
 
         if (!mounted) return;

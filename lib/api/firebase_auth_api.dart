@@ -23,6 +23,8 @@ class FirebaseAuthAPI {
     String fName,
     String lName,
     String uName,
+    List<String> styles,
+    List<String> interests,
   ) async {
     try {
       UserCredential userCreds = await auth.createUserWithEmailAndPassword(
@@ -38,6 +40,8 @@ class FirebaseAuthAPI {
         'username': uName,
         'email': email,
         'id': uid,
+        'styles': styles,
+        'interests': interests,
       });
 
       return 'Success!';
@@ -50,17 +54,15 @@ class FirebaseAuthAPI {
     await auth.signOut();
   }
 
-  Future<bool> checkUsername(String username) async{
-    final snapshot = await FirebaseFirestore
-      .instance // snapshot of db with usernames similar to user input username
-      .collection('users')
-      .where(
-        'username',
-        isEqualTo: username,
-      )
-      .get();
+  Future<bool> checkUsername(String username) async {
+    final snapshot =
+        await FirebaseFirestore
+            .instance // snapshot of db with usernames similar to user input username
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .get();
 
-    if (snapshot.docs.isEmpty){
+    if (snapshot.docs.isEmpty) {
       return false;
     } else {
       return true;
@@ -70,18 +72,18 @@ class FirebaseAuthAPI {
   Future<String?> findEmail(String username) async {
     String? email;
     await FirebaseFirestore
-      .instance // snapshot of db with usernames similar to user input username
-      .collection('users')
-      .where('username', isEqualTo: username)
-      .limit(1)
-      .get()
-      .then((QuerySnapshot querySnapshot) {
-        if (querySnapshot.docs.isEmpty) {
-          email = null;
-        } else {
-          email = querySnapshot.docs[0]['email'];
-        }
-      });
+        .instance // snapshot of db with usernames similar to user input username
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+          if (querySnapshot.docs.isEmpty) {
+            email = null;
+          } else {
+            email = querySnapshot.docs[0]['email'];
+          }
+        });
     return email;
   }
 }

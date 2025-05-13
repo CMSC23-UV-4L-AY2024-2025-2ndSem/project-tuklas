@@ -9,7 +9,7 @@ import '../models/travel_plan_model.dart';
 class ItineraryScreen extends StatefulWidget {
   final TravelPlan travelPlan;
 
-  const ItineraryScreen({Key? key, required this.travelPlan}) : super(key: key);
+  const ItineraryScreen({super.key, required this.travelPlan});
 
   @override
   _ItineraryScreenState createState() => _ItineraryScreenState();
@@ -62,7 +62,11 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                       children: [
                         Text(
                           widget.travelPlan.name,
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                         Text(
                           _formatLocation(widget.travelPlan.location),
@@ -71,7 +75,10 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                         if (dateRange.isNotEmpty)
                           Text(
                             '${DateFormat.yMMMd().format(dateRange.first)} - ${DateFormat.yMMMd().format(dateRange.last)}',
-                            style: TextStyle(fontSize: 14, color: Colors.white70),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
                           ),
                       ],
                     ),
@@ -85,13 +92,16 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(255, 5, 113, 112),
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
                       child: Text("Share"),
                     ),
                     IconButton(
                       onPressed: () {
-                          _showEditModal(context, widget.travelPlan);
+                        _showEditModal(context, widget.travelPlan);
                       },
                       icon: Icon(Icons.edit, color: Colors.white),
                     ),
@@ -102,53 +112,61 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           ),
           // Itinerary Section
           Expanded(
-            child: dateRange.isEmpty
-                ? Center(child: Text("No dates available for this trip."))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: dateRange.map((date) {
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  DateFormat.yMMMMEEEEd().format(date),
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                SizedBox(height: 8),
-                                ElevatedButton(
-                                  onPressed: () {},
-                                  child: Text("Add Location"),
-                                ),
-                                SizedBox(height: 8),
-                                TextField(
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    hintText: 'Add notes here',
+            child:
+                dateRange.isEmpty
+                    ? Center(child: Text("No dates available for this trip."))
+                    : SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children:
+                            dateRange.map((date) {
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        DateFormat.yMMMMEEEEd().format(date),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8),
+                                      ElevatedButton(
+                                        onPressed: () {},
+                                        child: Text("Add Location"),
+                                      ),
+                                      SizedBox(height: 8),
+                                      TextField(
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(),
+                                          hintText: 'Add notes here',
+                                        ),
+                                        maxLines: 3,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Column(
+                                        children: List.generate(4, (index) {
+                                          return CheckboxListTile(
+                                            value: false,
+                                            onChanged: (_) {},
+                                            title: Text(
+                                              'Checklist item ${index + 1}',
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                    ],
                                   ),
-                                  maxLines: 3,
                                 ),
-                                SizedBox(height: 8),
-                                Column(
-                                  children: List.generate(4, (index) {
-                                    return CheckboxListTile(
-                                      value: false,
-                                      onChanged: (_) {},
-                                      title: Text('Checklist item ${index + 1}'),
-                                    );
-                                  }),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                              );
+                            }).toList(),
+                      ),
                     ),
-                  ),
           ),
         ],
       ),
@@ -158,20 +176,23 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   void _showEditModal(BuildContext context, TravelPlan travelPlan) {
     final nameController = TextEditingController(text: travelPlan.name);
     final locationController = TextEditingController(
-      text: travelPlan.location != null
-          ? 'Lat: ${travelPlan.location!.latitude}, Lng: ${travelPlan.location!.longitude}'
-          : '',
+      text:
+          travelPlan.location != null
+              ? 'Lat: ${travelPlan.location!.latitude}, Lng: ${travelPlan.location!.longitude}'
+              : '',
     );
     final startDateController = TextEditingController(
-      text: travelPlan.dates.isNotEmpty
-          ? DateFormat.yMMMd().format(travelPlan.dates.first.toDate())
-          : '',
+      text:
+          travelPlan.dates.isNotEmpty
+              ? DateFormat.yMMMd().format(travelPlan.dates.first.toDate())
+              : '',
     );
 
     final endDateController = TextEditingController(
-      text: travelPlan.dates.isNotEmpty
-          ? DateFormat.yMMMd().format(travelPlan.dates.last.toDate())
-          : '',
+      text:
+          travelPlan.dates.isNotEmpty
+              ? DateFormat.yMMMd().format(travelPlan.dates.last.toDate())
+              : '',
     );
 
     showModalBottomSheet(
@@ -191,7 +212,10 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Edit Trip', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                'Edit Trip',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               SizedBox(height: 12),
               TextField(
                 controller: nameController,
@@ -205,7 +229,9 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                 onTap: () async {
                   final result = await Navigator.push<Map<String, dynamic>>(
                     context,
-                    MaterialPageRoute(builder: (context) => const MapSearchPage()),
+                    MaterialPageRoute(
+                      builder: (context) => const MapSearchPage(),
+                    ),
                   );
                   if (result != null &&
                       result.containsKey('latitude') &&
@@ -229,11 +255,11 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2100),
                   );
-                  if (picked != null) {
-                    setState(() {
-                      startDateController.text = DateFormat.yMMMd().format(picked);
-                    });
-                  }
+                  setState(() {
+                    startDateController.text = DateFormat.yMMMd().format(
+                      picked!,
+                    );
+                  });
                 },
               ),
               SizedBox(height: 12),
@@ -248,18 +274,20 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                     firstDate: DateTime(2000),
                     lastDate: DateTime(2100),
                   );
-                  if (picked != null) {
-                    setState(() {
-                      endDateController.text = DateFormat.yMMMd().format(picked);
-                    });
-                  }
+                  setState(() {
+                    endDateController.text = DateFormat.yMMMd().format(picked!);
+                  });
                 },
               ),
               SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () async {
-                  final startDate = DateFormat.yMMMd().parse(startDateController.text);
-                  final endDate = DateFormat.yMMMd().parse(endDateController.text);
+                  final startDate = DateFormat.yMMMd().parse(
+                    startDateController.text,
+                  );
+                  final endDate = DateFormat.yMMMd().parse(
+                    endDateController.text,
+                  );
 
                   final updatedPlan = TravelPlan(
                     id: travelPlan.id,
@@ -269,8 +297,18 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                       Timestamp.fromDate(endDate),
                     ],
                     location: GeoPoint(
-                      double.parse(locationController.text.split(',')[0].split(':')[1].trim()),
-                      double.parse(locationController.text.split(',')[1].split(':')[1].trim()),
+                      double.parse(
+                        locationController.text
+                            .split(',')[0]
+                            .split(':')[1]
+                            .trim(),
+                      ),
+                      double.parse(
+                        locationController.text
+                            .split(',')[1]
+                            .split(':')[1]
+                            .trim(),
+                      ),
                     ),
                     userId: travelPlan.userId,
                     imageUrl: travelPlan.imageUrl,
@@ -296,5 +334,4 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
       },
     );
   }
-
 }

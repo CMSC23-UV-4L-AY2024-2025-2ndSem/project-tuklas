@@ -1,4 +1,3 @@
-// user_profile_provider.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,14 +21,14 @@ class UserProfileProvider with ChangeNotifier {
           .collection('users')
           .doc('__nouser__')
           .snapshots()
-          .map((snapshot) => snapshot as DocumentSnapshot<Map<String, dynamic>>);
+          .map((snapshot) => snapshot);
     }
 
     return FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .snapshots()
-        .map((snapshot) => snapshot as DocumentSnapshot<Map<String, dynamic>>);
+        .map((snapshot) => snapshot);
   }
 
   // Method to initialize stream
@@ -45,7 +44,6 @@ class UserProfileProvider with ChangeNotifier {
       name: profile.name,
       styles: profile.styles,
       interests: profile.interests,
-      imageBase64: profile.imageBase64,
     );
     print(message);
     notifyListeners();
@@ -70,5 +68,4 @@ class UserProfileProvider with ChangeNotifier {
     await firebaseService.editUserInterests(interests, username);
     notifyListeners();
   }
-
 }

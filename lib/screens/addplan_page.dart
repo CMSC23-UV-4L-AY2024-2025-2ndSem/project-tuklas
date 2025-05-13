@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/models/travel_plan_model.dart';
 import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
-import 'package:project_TUKLAS/screens/addlocation_page.dart';
 import 'package:project_TUKLAS/screens/map_search_page.dart';
 import 'package:provider/provider.dart';
 
@@ -47,11 +46,9 @@ class _AddtravelPageState extends State<AddtravelPage> {
       lastDate: DateTime(2100),
     );
 
-    if (picked != null) {
-      setState(() {
-        controller.text = "${picked.toLocal()}".split(' ')[0];
-      });
-    }
+    setState(() {
+      controller.text = "${picked!.toLocal()}".split(' ')[0];
+    });
   }
 
   @override

@@ -28,7 +28,7 @@ class TravelPlanProvider with ChangeNotifier {
           .where('userId', isEqualTo: '__nouser__') // Use an impossible value
           .snapshots()
           // cast the resulting stream's snapshot type
-          .map((snapshot) => snapshot as QuerySnapshot<Map<String, dynamic>>);
+          .map((snapshot) => snapshot);
     }
 
     // fetch the plans for the current user and ensure the stream type is correct
@@ -37,7 +37,7 @@ class TravelPlanProvider with ChangeNotifier {
         .where('userId', isEqualTo: user.uid)
         .snapshots()
         .map((snapshot) {
-          return snapshot as QuerySnapshot<Map<String, dynamic>>;
+          return snapshot;
         });
   }
 
@@ -49,18 +49,16 @@ class TravelPlanProvider with ChangeNotifier {
   }
 
   // method to edit plans and update in Firestore (using the provided editPlan)
-    Future<void> editPlan(
-      String id,
-      String name,
-      List<Timestamp> dates, // ✅ make sure it's Timestamp
-      GeoPoint location,
-    ) async {
-      String message = await firebaseService.editPlan(id, name, dates, location);
-      print(message);
-      notifyListeners();
-    }
-
-
+  Future<void> editPlan(
+    String id,
+    String name,
+    List<Timestamp> dates, // ✅ make sure it's Timestamp
+    GeoPoint location,
+  ) async {
+    String message = await firebaseService.editPlan(id, name, dates, location);
+    print(message);
+    notifyListeners();
+  }
 
   // method to delete plans and update in Firestore
   Future<void> deletePlan(String id) async {

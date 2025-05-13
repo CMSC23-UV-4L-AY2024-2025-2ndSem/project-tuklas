@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:project_TUKLAS/screens/account_setup/setup_profile_page.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_profile_provider.dart';
-import '../main_screen.dart';
 
+// This page allows user to choose their travel interests (skippable)
+// when submit is clicked it navigates to setup profile page
 class InterestsPage extends StatefulWidget {
-  final String username;
-  const InterestsPage({super.key, required this.username});
+  final String? email, password;
+  final List<String>? travelStyles;
+  const InterestsPage({
+    super.key,
+    required this.email,
+    this.travelStyles,
+    required this.password,
+  });
 
   @override
   State<InterestsPage> createState() => _InterestsState();
@@ -26,7 +34,7 @@ class _InterestsState extends State<InterestsPage> {
     'Night Life',
     'Food Trips',
     'Cafes',
-    'Others'
+    'Others',
   ];
 
   List<String> selectedInterests = [];
@@ -40,14 +48,15 @@ class _InterestsState extends State<InterestsPage> {
   // Load user interests when the page is initialized
   Future<void> _loadUserInterests() async {
     try {
-      final profile = await context.read<UserProfileProvider>().fetchUserProfileOnce();
+      final profile =
+          await context.read<UserProfileProvider>().fetchUserProfileOnce();
       setState(() {
         selectedInterests = List<String>.from(profile.interests ?? []);
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load interests: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load interests: $e')));
     }
   }
 
@@ -62,7 +71,7 @@ class _InterestsState extends State<InterestsPage> {
           heading,
           selectInterests,
           SizedBox(height: 50),
-          submitButton
+          submitButton,
         ],
       ),
     );
@@ -97,7 +106,8 @@ class _InterestsState extends State<InterestsPage> {
         alignment: WrapAlignment.center,
         spacing: 10,
         runSpacing: 2,
-        children: interests.map((interestName) => interest(interestName)).toList(),
+        children:
+            interests.map((interestName) => interest(interestName)).toList(),
       ),
     ),
   );
@@ -117,9 +127,7 @@ class _InterestsState extends State<InterestsPage> {
       style: OutlinedButton.styleFrom(
         side: BorderSide(color: Color(0xFF027572), width: 1),
         minimumSize: Size((title.length + 5).toDouble(), 40),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: isSelected ? Color(0xFF027572) : Colors.transparent,
         foregroundColor: isSelected ? Colors.white : Color(0xFF027572),
         textStyle: GoogleFonts.poppins(fontSize: 16),
@@ -128,26 +136,21 @@ class _InterestsState extends State<InterestsPage> {
     );
   }
 
+  // navigate to next page
   Widget get submitButton => ElevatedButton(
     onPressed: () async {
-      // Save the selected interests to the user's profile
-      try {
-        await context.read<UserProfileProvider>().updateInterests(selectedInterests, widget.username);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Interests updated successfully')),
-        );
-
-        // Navigate back to the main screen after saving
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving interests: $e')),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => SetupProfilePage(
+                email: widget.email!,
+                travelStyles: widget.travelStyles,
+                travelInterests: selectedInterests,
+                password: widget.password!,
+              ), // pass email and selected travel styles and travel interest to next page
+        ),
+      );
     },
     style: ElevatedButton.styleFrom(
       minimumSize: Size(350, 56),

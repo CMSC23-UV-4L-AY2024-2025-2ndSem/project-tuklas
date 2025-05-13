@@ -4,12 +4,11 @@ import '../../providers/user_profile_provider.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_interests_page.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_styles_page.dart';
 import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
-import 'package:project_TUKLAS/screens/addplan_page.dart';
 import 'package:project_TUKLAS/screens/main_screen.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
-import 'screens/signup_page.dart';
+import 'screens/account_setup/signup_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,13 +42,23 @@ class MyApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/travel-styles') {
-          final username = settings.arguments; 
-
-          return MaterialPageRoute(builder: (context) => TravelStylesPage(username: username as String));
+          final args = settings.arguments as Map<String, String>;
+          return MaterialPageRoute(
+            builder:
+                (context) => TravelStylesPage(
+                  email: args['email'] ?? '',
+                  password: args['password'] ?? '',
+                ),
+          );
         } else if (settings.name == '/travel-interests') {
-          final username = settings.arguments; 
-
-          return MaterialPageRoute(builder: (context) => InterestsPage(username: username as String));
+          final args = settings.arguments as Map<String, String>;
+          return MaterialPageRoute(
+            builder:
+                (context) => InterestsPage(
+                  email: args['email'] ?? '',
+                  password: args['password'] ?? '',
+                ),
+          );
         }
         return null;
       },
