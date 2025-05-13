@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/api/storage_api.dart';
 import '../api/firebase_auth_api.dart';
 
 class UserAuthProvider with ChangeNotifier {
   late FirebaseAuthAPI authService;
   late Stream<User?> userStream;
+  final StorageApi storageService = StorageApi();
 
   UserAuthProvider() {
     authService = FirebaseAuthAPI();
@@ -26,6 +28,8 @@ class UserAuthProvider with ChangeNotifier {
     String fName,
     String lName,
     String uName,
+    List<String> styles,
+    List<String> interests,
   ) async {
     String message = await authService.signUp(
       email,
@@ -33,6 +37,8 @@ class UserAuthProvider with ChangeNotifier {
       fName,
       lName,
       uName,
+      styles,
+      interests,
     );
     notifyListeners();
     return message;
@@ -53,5 +59,12 @@ class UserAuthProvider with ChangeNotifier {
     String? email = await authService.findEmail(username);
     notifyListeners();
     return email!;
+  }
+
+  // method to upload image from setting up profile
+  Future<void> uploadUserImage(dynamic image, String username) async {
+    final message = await storageService.uploadImage(image, username);
+    print(message);
+    notifyListeners();
   }
 }

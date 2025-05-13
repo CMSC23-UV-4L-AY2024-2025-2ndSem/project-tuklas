@@ -4,9 +4,15 @@ import 'package:provider/provider.dart';
 import '../../providers/user_profile_provider.dart';
 import '../account_setup/travel_interests_page.dart';
 
+// This page allows user to choose their preferred travel style (skippable)
+// when submit is clicked it navigates to travel interest page
 class TravelStylesPage extends StatefulWidget {
-  final String username;
-  const TravelStylesPage({super.key, required this.username});
+  final String? email, password;
+  const TravelStylesPage({
+    super.key,
+    required this.email,
+    required this.password,
+  });
 
   @override
   State<TravelStylesPage> createState() => _TravelStylesState();
@@ -25,9 +31,9 @@ class _TravelStylesState extends State<TravelStylesPage> {
     'Solo Travel',
     'Group Travel',
     'Day Trip Travel',
-    'Others'
+    'Others',
   ];
-  
+
   List<String> selectedStyles = [];
 
   @override
@@ -39,14 +45,15 @@ class _TravelStylesState extends State<TravelStylesPage> {
   // Load user styles when the page is initialized
   Future<void> _loadUserStyles() async {
     try {
-      final profile = await context.read<UserProfileProvider>().fetchUserProfileOnce();
+      final profile =
+          await context.read<UserProfileProvider>().fetchUserProfileOnce();
       setState(() {
         selectedStyles = List<String>.from(profile.styles ?? []);
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load styles: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load styles: $e')));
     }
   }
 
@@ -57,12 +64,7 @@ class _TravelStylesState extends State<TravelStylesPage> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          heading,
-          selectStyles,
-          SizedBox(height: 50),
-          submitButton
-        ],
+        children: [heading, selectStyles, SizedBox(height: 50), submitButton],
       ),
     );
   }
@@ -124,9 +126,7 @@ class _TravelStylesState extends State<TravelStylesPage> {
       style: OutlinedButton.styleFrom(
         side: BorderSide(color: Color(0xFF027572), width: 1),
         minimumSize: Size((title.length + 5).toDouble(), 40),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: isSelected ? Color(0xFF027572) : Colors.transparent,
         foregroundColor: isSelected ? Colors.white : Color(0xFF027572),
         textStyle: GoogleFonts.poppins(fontSize: 16),
@@ -135,28 +135,20 @@ class _TravelStylesState extends State<TravelStylesPage> {
     );
   }
 
+  // navigate to next page
   Widget get submitButton => ElevatedButton(
     onPressed: () async {
-      if (selectedStyles.isNotEmpty) {
-        try {
-          // Save the selected styles to the user's profile
-          await context.read<UserProfileProvider>().updateStyles(selectedStyles, widget.username);
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Styles updated successfully')),
-          );
-
-          // Navigate to the next page (InterestsPage)
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => InterestsPage(username: widget.username)),
-          );
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving styles: $e')),
-          );
-        }
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => InterestsPage(
+                email: widget.email!,
+                travelStyles: selectedStyles,
+                password: widget.password!,
+              ), // pass email and selected travel styles to next page
+        ),
+      );
     },
     style: ElevatedButton.styleFrom(
       minimumSize: Size(350, 56),
