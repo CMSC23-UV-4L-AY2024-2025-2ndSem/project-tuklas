@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_styles_page.dart';
 import 'package:project_TUKLAS/screens/signin_page.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../providers/auth_provider.dart';
-import '../models/signup_form_values.dart';
+import '../../models/signup_form_values.dart';
 
+// The SignUp page ask for the users email and password,
+// Email must be in proper format and can be used multiple times.
+// Passwords will be checked if it is at least 6 characters,
+// contains an uppercase and lowercase letter, a number, and at least one special character.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -16,7 +18,7 @@ class SignUpPage extends StatefulWidget {
 class _SignUpState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   bool showEmailSignUpErrorMessage = false;
-  bool showUserSignUpErrorMessage = false;
+
   List<String> special = [
     '!',
     '.',
@@ -48,9 +50,6 @@ class _SignUpState extends State<SignUpPage> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Column(
                     children: [
-                      nameField('First name', 'fName'),
-                      nameField('Last name', 'lName'),
-                      nameField('Username', 'uName'),
                       nameField('Email', 'email'),
                       nameField('Password', 'password'),
                     ],
@@ -59,9 +58,6 @@ class _SignUpState extends State<SignUpPage> {
                 // error messages - not always displayed
                 showEmailSignUpErrorMessage
                     ? signUpErrorMessage('Email')
-                    : Container(),
-                showUserSignUpErrorMessage
-                    ? signUpErrorMessage('Username')
                     : Container(),
 
                 Container(
@@ -140,6 +136,7 @@ class _SignUpState extends State<SignUpPage> {
       onSaved:
           (value) => setState(() => formValues.textfieldValues[val] = value),
       validator: (value) {
+        // validate email and password
         int upCheck = 0; // checkers for each password requirement
         int lowCheck = 0;
         int numCheck = 0;
@@ -147,26 +144,8 @@ class _SignUpState extends State<SignUpPage> {
         if (value == null || value.isEmpty) {
           return "Please enter your ${label.toLowerCase()}";
         }
-        // additional checks if input is a username
-        if (val == 'uName') {
-          for (int i = 0; i < value.length; i++) {
-            if ((int.tryParse(value[i]).runtimeType ==
-                    int) || // check if character is a number
-                (value[i] == '.' ||
-                    value[i] == '_') || // check if character is a '.' or '_'
-                value[i].codeUnitAt(0) >= 65 &&
-                    value[i].codeUnitAt(0) <=
-                        90 || // check if character is an uppercase letter
-                value[i].codeUnitAt(0) >= 97 && value[i].codeUnitAt(0) <= 122) {
-              // check if character is a lowercase letter
-              continue;
-            } else {
-              return "A username may only contain letters A-Z or a-z, 0-9, _ and .";
-            }
-          }
-        } // if input field is for email address,
-        else if (val == 'email' &&
-            (!value.contains('@') || !value.contains('.'))) {
+        // if input field is for email address,
+        if (val == 'email' && (!value.contains('@') || !value.contains('.'))) {
           // check for significant symbols
           return "Please enter a valid email format";
         } // if input field is for password
@@ -210,7 +189,7 @@ class _SignUpState extends State<SignUpPage> {
   );
 
   Widget signUpErrorMessage(cred) => Padding(
-    // will be displayed when either email or username is already being used by existing account
+    // will be displayed when either email is already being used by existing account
     padding: EdgeInsets.only(bottom: 10),
     child: Text(
       "$cred already in use!",
@@ -220,43 +199,23 @@ class _SignUpState extends State<SignUpPage> {
 
   Widget get submitButton => ElevatedButton(
     onPressed: () async {
-      String? message;
       if (_formKey.currentState!.validate()) {
+        // email and password validated
         _formKey.currentState!.save();
-        bool userExists = await context.read<UserAuthProvider>().authService.checkUsername(formValues.textfieldValues['uName']!);
-
-        if (userExists) {
-          // if it is not empty, username is already being used
-          showUserSignUpErrorMessage = true;
-        } else {
-          showUserSignUpErrorMessage = false;
-          message = await context.read<UserAuthProvider>().authService.signUp(
-            formValues.textfieldValues['email']!,
-            formValues.textfieldValues['password']!,
-            formValues.textfieldValues['fName']!,
-            formValues.textfieldValues['lName']!,
-            formValues.textfieldValues['uName']!,
+        // navigate to TravelStylePage
+        Navigator.pop(context);
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => TravelStylesPage(
+                    email: formValues.textfieldValues['email']!,
+                    password: formValues.textfieldValues['password']!,
+                  ),
+            ),
           );
         }
-
-        setState(() {
-          if (message == "Success!") {
-            // navigate to main screen
-            showEmailSignUpErrorMessage = false;
-            // Move to homepage ! all checks completed, sign up success
-            Navigator.pop(context);
-            if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => TravelStylesPage(username: formValues.textfieldValues['uName']!)),
-              );
-            }
-          } else {
-            if (message == 'email-already-in-use') {
-              showEmailSignUpErrorMessage = true;
-            }
-          }
-        });
       }
     },
     style: ElevatedButton.styleFrom(
@@ -304,21 +263,17 @@ class _SignUpState extends State<SignUpPage> {
       String? message;
       if (_formKey.currentState!.validate()) {
         _formKey.currentState!.save();
-        bool userExists = await context.read<UserAuthProvider>().authService.checkUsername(formValues.textfieldValues['uName']!);
+        // bool userExists = await context
+        //     .read<UserAuthProvider>()
+        //     .authService
+        //     .checkUsername(formValues.textfieldValues['uName']!);
 
-        if (userExists) {
-          // if it is not empty, username is already being used
-          showUserSignUpErrorMessage = true;
-        } else {
-          showUserSignUpErrorMessage = false;
-          message = await context.read<UserAuthProvider>().authService.signUp(
-            formValues.textfieldValues['email']!,
-            formValues.textfieldValues['password']!,
-            formValues.textfieldValues['fName']!,
-            formValues.textfieldValues['lName']!,
-            formValues.textfieldValues['uName']!,
-          );
-        }
+        // if (userExists) {
+        //   // if it is not empty, username is already being used
+        //   showUserSignUpErrorMessage = true;
+        // } else {
+        //   showUserSignUpErrorMessage = false;
+        // }
 
         setState(() {
           if (message == "Success!") {
@@ -327,7 +282,13 @@ class _SignUpState extends State<SignUpPage> {
             if (mounted) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => TravelStylesPage(username: formValues.textfieldValues['uName']!)),
+                MaterialPageRoute(
+                  builder:
+                      (context) => TravelStylesPage(
+                        email: formValues.textfieldValues['email']!,
+                        password: formValues.textfieldValues['password']!,
+                      ),
+                ),
               );
             }
           } else {

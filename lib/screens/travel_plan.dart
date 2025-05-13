@@ -11,7 +11,6 @@ import '../models/travel_plan_model.dart';
 import 'package:project_TUKLAS/screens/itinerary.dart';
 import 'user_profile.dart';
 
-
 class TravelPlanScreen extends StatelessWidget {
   const TravelPlanScreen({super.key});
 
@@ -138,7 +137,10 @@ class TravelPlanScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => UserProfilePage(username: 'your_username_here'), // Pass the username or any identifier
+                          builder:
+                              (context) => UserProfilePage(
+                                username: 'your_username_here',
+                              ), // Pass the username or any identifier
                         ),
                       );
                     },
@@ -515,7 +517,6 @@ class TravelPlanItem extends StatelessWidget {
     required this.plan,
   });
 
-
   // method to show the options bottom sheet
   void _showOptionsBottomSheet(
     BuildContext context,
@@ -772,8 +773,9 @@ class TravelPlanItem extends StatelessWidget {
                 ),
             // widget to display while image is loading
             loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null)
+              if (loadingProgress == null) {
                 return child; // return image if loaded
+              }
               return Container(
                 // show placeholder container while loading
                 width: 58,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:project_TUKLAS/screens/signup_page.dart';
+import 'package:project_TUKLAS/screens/account_setup/signup_page.dart';
 import 'package:provider/provider.dart';
 import '../models/signin_form_values.dart';
 
@@ -183,12 +183,10 @@ class _SignInPageState extends State<SignInPage> {
           }
         });
 
-        if (email != null) {
-          message = await provider.signIn(
-            email: email,
-            password: formValues.textfieldValues['password']!,
-          );
-        }
+        message = await provider.signIn(
+          email: email.toString(),
+          password: formValues.textfieldValues['password']!,
+        );
 
         setState(() {
           if (message == "invalid-credential") {

@@ -19,7 +19,6 @@ class FirebaseUserProfileApi {
     required String name,
     List<String>? styles,
     List<String>? interests,
-    String? imageBase64,
   }) async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -32,7 +31,6 @@ class FirebaseUserProfileApi {
         'name': name,
         'styles': styles ?? [],
         'interests': interests ?? [],
-        'imageBase64': imageBase64,
       });
 
       return 'Profile updated successfully!';
@@ -74,16 +72,22 @@ class FirebaseUserProfileApi {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('No user logged in');
 
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
     await userDoc.update({'styles': styles});
   }
 
-  Future<void> editUserInterests(List<String> interests, String username) async {
+  Future<void> editUserInterests(
+    List<String> interests,
+    String username,
+  ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('No user logged in');
 
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
     await userDoc.update({'interests': interests});
   }
-
 }
