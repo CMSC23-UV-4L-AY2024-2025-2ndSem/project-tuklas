@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../providers/itinerary_provider.dart';
 import '../providers/travel_plan_provider.dart';
 import '../models/travel_plan_model.dart';
 import 'package:project_TUKLAS/screens/itinerary.dart';
@@ -817,11 +818,12 @@ class TravelPlanItem extends StatelessWidget {
           splashRadius: 20,
           tooltip: 'More options', // accessibility tooltip
         ),
-        onTap: () {
+        onTap: () async {
+          List<String> info = await context.read<ItineraryProvider>().firebaseService.getInfo(plan.id!);
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ItineraryScreen(travelPlan: plan),
+              builder: (_) => ItineraryScreen(travelPlan: plan, information: info),
             ),
           );
         },

@@ -9,11 +9,10 @@ class ItineraryProvider with ChangeNotifier {
   final FirebaseItineraryApi firebaseService = FirebaseItineraryApi(); //initialize API
 
   ItineraryProvider() {
-    fetchAllItineraries();
+    getAllItineraries();
   }
 
-  // method to get all itineraries from Firestore
-  void fetchAllItineraries() {
+  void getAllItineraries() {
     _itineraryStream = firebaseService.getAllItineraries();
     notifyListeners();
   }
@@ -41,4 +40,17 @@ class ItineraryProvider with ChangeNotifier {
     notifyListeners();
   }
   
+  Future<String> getId(String travelPlanId, DateTime date) async {
+    String? id = await firebaseService.getId(travelPlanId, date);
+    notifyListeners();
+    return id!;
+  }
+
+  Future<List<String>> getInfo(String travelPlanId) async {
+    List<String> info = await firebaseService.getInfo(travelPlanId);
+    print("PROVIDER INFO $info");
+    notifyListeners();
+    return info;
+  }
+
 }

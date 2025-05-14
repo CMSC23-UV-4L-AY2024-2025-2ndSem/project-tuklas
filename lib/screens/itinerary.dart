@@ -9,7 +9,9 @@ import '../providers/itinerary_provider.dart';
 
 class ItineraryScreen extends StatefulWidget {
   final TravelPlan travelPlan;
-  const ItineraryScreen({super.key, required this.travelPlan});
+  final List<String> information;
+
+  const ItineraryScreen({super.key, required this.travelPlan, required this.information});
   
   @override
   State<ItineraryScreen> createState() => _ItineraryScreenState();
@@ -31,26 +33,29 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
     return dates;
   }
 
-  int getNumberOfDays(List<Timestamp> timestamps) {
-    if (timestamps.isEmpty) return 0;
-
-    timestamps.sort((a, b) => a.toDate().compareTo(b.toDate()));
-    DateTime start = timestamps.first.toDate();
-    DateTime end = timestamps.last.toDate();
-
-    return end.difference(start).inDays + 1;
-  }
-
   String _formatLocation(GeoPoint? location) {
     if (location == null) return 'Unknown location';
     return 'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
   }
 
+  int getDayIndex(DateTime day, List<DateTime> dateRange) {
+    for (int i = 0; i < dateRange.length; i++) {
+      if (_isSameDate(dateRange[i], day)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateRange = _generateDateRange(widget.travelPlan.dates);
-    final formKey = GlobalKey<FormState>();
-    
+    List<String> information = widget.information;
+    List<GlobalKey<FormState>> formKeyList = [];
 
     return Scaffold(
       body: Column(
@@ -123,16 +128,22 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
             ),
           ),
           // Itinerary Section
-          Form(
-          key: formKey,
-          child: Expanded(
+          Expanded(
             child: dateRange.isEmpty
                 ? Center(child: Text("No dates available for this trip.", style: GoogleFonts.poppins()))
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: dateRange.map((date) {
-                        return Card(
+                        Itinerary itinerary = Itinerary();
+                        final formKey = GlobalKey<FormState>();
+                        formKeyList.add(formKey);
+                        int day = getDayIndex(date, dateRange);
+                        
+                        TextEditingController notesController = TextEditingController(text: information[(day * 2)].isEmpty ? '' : information[(day * 2)]);
+                        return Form(
+                          key: formKeyList[day],
+                          child: Card(
                           margin: const EdgeInsets.only(bottom: 16),
                           child: Padding(
                             padding: const EdgeInsets.all(12),
@@ -177,16 +188,27 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                                     ),
                                     filled: true,
                                     fillColor: const Color.fromARGB(255, 222, 222, 222),
-                                    hintText: 'Add notes here',
+                                    hintText: '',
                                     hintStyle: GoogleFonts.poppins(fontSize: 14)
                                   ),
-                                  onSaved: (value) => setState(() => value = value),
+                                  onSaved: (value) => setState(() {
+                                    itinerary.notes = value;
+                                  }),
+                                  onChanged: (value) {
+                                    notesController.text = value;
+                                  },
                                   maxLines: 3,
+                                  controller: notesController
                                 ),
                                 SizedBox(height: 8),
                                 ElevatedButton(
                                   onPressed: () async {
-                                    formKey.currentState!.save();
+                                    formKeyList[day].currentState!.save();
+                                    
+                                    String? id = await context.read<ItineraryProvider>().getId(widget.travelPlan.id!, date);
+                                    await context.read<ItineraryProvider>().editItinerary(id, widget.travelPlan.id!, date, widget.travelPlan.location, itinerary.notes);
+                                    information = await context.read<ItineraryProvider>().getInfo(widget.travelPlan.id!);
+
                                     // edit itinerary
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -198,7 +220,7 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                                   ),
                                   child: Text("Save", style: GoogleFonts.poppins(color: const Color.fromARGB(255, 255, 255, 255))),
                                 ),
-                                // ---- CHECKLIST SECTION ---- not yet implemented T-T
+                                // ---- CHECKLIST SECTION ---- not yet implemented !!
                                 // Column(
                                 //   children: List.generate(4, (index) {
                                 //     return CheckboxListTile(
@@ -215,12 +237,12 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                               ],
                             ),
                           ),
+                          )
                         );
                       }).toList(),
                     ),
                   ),
           ),
-          )
         ],
       ),
     );
