@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../api/user_profile_api.dart';
 
@@ -18,5 +19,12 @@ class UserProfileProvider with ChangeNotifier {
     String message = await profileService.editUserInterests(interests, username);
     notifyListeners();
     return message;
+  }
+
+  Stream<QuerySnapshot> getAllFriends(String userId) {
+    Stream<QuerySnapshot> friends = profileService.getAllFriends(userId);
+    notifyListeners();
+    print(friends);
+    return friends;
   }
 }
