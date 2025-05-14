@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:project_TUKLAS/screens/shareqr_page.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/travel_plan_provider.dart';
@@ -434,7 +435,7 @@ class TravelPlanScreen extends StatelessWidget {
       body: SafeArea(
         bottom: false, // avoid bottom system bar overlap
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: travelPlanProvider.travelplan,
+          stream: travelPlanProvider.createdTravelPlans(),
           builder: (context, planSnapshot) {
             if (planSnapshot.connectionState == ConnectionState.waiting &&
                 !planSnapshot.hasData) {
@@ -555,6 +556,16 @@ class TravelPlanItem extends StatelessWidget {
                 Navigator.pop(context); // close the bottom sheet
                 // TO DO: implement share functionality
                 print('Share tapped for plan: ${planToShowOptionsFor.id}');
+                // navigate to generate QR page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => GenerateQrPage(
+                          travelPlanId: planToShowOptionsFor.id,
+                        ),
+                  ),
+                );
               },
             ),
             ListTile(

@@ -8,6 +8,13 @@ class FirebaseAuthAPI {
     return auth.authStateChanges();
   }
 
+  String getCurrentUserId() {
+    if (auth.currentUser == null) {
+      return 'User not logged in!';
+    }
+    return auth.currentUser!.uid;
+  }
+
   Future<String> signIn(String email, String password) async {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
