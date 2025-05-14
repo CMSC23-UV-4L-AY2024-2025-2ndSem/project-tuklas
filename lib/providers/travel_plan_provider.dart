@@ -22,14 +22,16 @@ class TravelPlanProvider with ChangeNotifier {
 
   // method to get travel plans created by the current user
   Stream<QuerySnapshot<Map<String, dynamic>>> createdTravelPlans() {
-    var createdTravelPlans = firebaseService.createdTravelplan;
-    return createdTravelPlans;
+    print("Fetching created travel plans");
+    print(firebaseService.createdTravelplan.toList());
+    return firebaseService.createdTravelplan;
   }
 
   // method to get travel plans shared with the current user
   Stream<QuerySnapshot<Map<String, dynamic>>> sharedTravelPlans() {
-    var sharedTravelPlans = firebaseService.sharedTravelPlan;
-    return sharedTravelPlans;
+    print("Fetching shared travel plans");
+    print(firebaseService.sharedTravelPlan.toList());
+    return firebaseService.sharedTravelPlan;
   }
 
   // method to add plans and store in Firestore

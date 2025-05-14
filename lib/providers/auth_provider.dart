@@ -13,6 +13,10 @@ class UserAuthProvider with ChangeNotifier {
     userStream = authService.getUserStream();
   }
 
+  String getCurrentUserId() {
+    return authService.getCurrentUserId();
+  }
+
   Future<String> signIn({
     required String email,
     required String password,
