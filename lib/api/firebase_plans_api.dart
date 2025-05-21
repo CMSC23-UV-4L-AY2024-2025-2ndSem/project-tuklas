@@ -107,4 +107,36 @@ class FirebasePlansApi {
       return "Unknown error occurred: $e";
     }
   }
+
+  //method to share travel plan to another user via username
+  Future<String> sharePlanToUserViaUsername(
+    String travelPlanId,
+    String username,
+  ) async {
+    try {
+      // Fetch the user ID based on the username
+      final userSnapshot =
+          await db
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .get();
+
+      if (userSnapshot.docs.isEmpty) {
+        return "User not found.";
+      }
+
+      final userId = userSnapshot.docs.first.id;
+
+      // Share the plan with the user ID
+      await db.collection('plans').doc(travelPlanId).update({
+        'sharedWith': FieldValue.arrayUnion([userId]),
+      });
+
+      return "Plan shared successfully!";
+    } on FirebaseException catch (e) {
+      return "Error on ${e.code}: ${e.message}";
+    } catch (e) {
+      return "Unknown error occurred: $e";
+    }
+  }
 }

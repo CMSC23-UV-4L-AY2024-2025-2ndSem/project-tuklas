@@ -74,7 +74,6 @@ class TravelPlanScreen extends StatelessWidget {
     List<TravelPlan> allPlans,
   ) {
     TravelPlan? upcomingPlan; // holds the next upcoming plan
-    TravelPlan? sharedPlan; // holds the next shared plan
 
     if (allPlans.isNotEmpty) {
       // Find future plans logic (remains the same)
@@ -202,18 +201,6 @@ class TravelPlanScreen extends StatelessWidget {
                 // upcoming plan card
                 _buildUpcomingPlanCard(upcomingPlan),
                 const SizedBox(height: 28),
-
-                // TODO: add shared travel plans section here
-                // Shared travel plans header
-                Text(
-                  "Shared Travel Plans",
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: const Color.fromARGB(221, 0, 0, 0),
-                  ),
-                ),
-                const SizedBox(height: 10),
 
                 // list of all plans or "no plans" message
                 allPlans.isEmpty
@@ -416,6 +403,34 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
+  String _getFirstName(
+    AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> userSnapshot,
+  ) {
+    if (userSnapshot.hasData && userSnapshot.data!.exists) {
+      final userData = userSnapshot.data!.data();
+      return userData?['fname'] as String? ?? 'User';
+    }
+    return 'User';
+  }
+
+  List<TravelPlan> _parseTravelPlans(
+    AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> planSnapshot,
+  ) {
+    return (planSnapshot.data?.docs ?? [])
+        .map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          try {
+            return TravelPlan.fromJson(data);
+          } catch (e) {
+            print("Error parsing travel plan from firestore: $e, Data: $data");
+            return null;
+          }
+        })
+        .whereType<TravelPlan>()
+        .toList();
+  }
+
   // main build method
   @override
   Widget build(BuildContext context) {
@@ -436,69 +451,70 @@ class TravelPlanScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        bottom: false, // avoid bottom system bar overlap
+        bottom: false,
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream:
-              travelPlanProvider
-                  .createdTravelPlans(), // ensure the stream matches the expected type
+          stream: travelPlanProvider.createdTravelPlans(),
           builder: (context, planSnapshot) {
-            if (planSnapshot.connectionState == ConnectionState.waiting &&
-                !planSnapshot.hasData) {
+            if (planSnapshot.connectionState == ConnectionState.waiting) {
               return _buildLoadingIndicator();
             }
+
             if (planSnapshot.hasError) {
               print('Plan stream error: ${planSnapshot.error}');
+              return _buildErrorWidget('Failed to load travel plans.');
             }
 
-            // fetch user data
-            return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              future: _fetchUserData(currentUser.uid),
-              builder: (context, userSnapshot) {
-                // loading/error handling for user data
-                if (userSnapshot.connectionState == ConnectionState.waiting) {
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream:
+                  travelPlanProvider
+                      .sharedTravelPlans(), // Stream for shared plans
+              builder: (context, sharedPlanSnapshot) {
+                if (sharedPlanSnapshot.connectionState ==
+                    ConnectionState.waiting) {
                   return _buildLoadingIndicator();
                 }
-                if (userSnapshot.hasError) {
-                  print('User data fetch error: ${userSnapshot.error}');
-                  return _buildErrorWidget('Could not load user details.');
-                }
 
-                // process user data (default/fallback included)
-                String firstName = 'User';
-                String? photoURL = currentUser.photoURL;
-                if (userSnapshot.hasData && userSnapshot.data!.exists) {
-                  final userData = userSnapshot.data!.data();
-                  firstName = userData?['fname'] as String? ?? 'User';
-                } else {
-                  print('User document not found for uid: ${currentUser.uid}');
-                }
-
-                // process plan data (default/fallback included)
-                List<TravelPlan> allPlans =
-                    (planSnapshot.data?.docs ?? [])
-                        .map((doc) {
-                          final data = doc.data();
-                          data['id'] = doc.id;
-                          try {
-                            return TravelPlan.fromJson(data);
-                          } catch (e) {
-                            print(
-                              "Error parsing travelplan from firestore: $e, Data: $data",
-                            );
-                            return null;
-                          }
-                        })
-                        .whereType<TravelPlan>()
-                        .toList();
-
-                if (planSnapshot.hasError) {
+                if (sharedPlanSnapshot.hasError) {
                   print(
-                    "Displaying content despite plan stream error: ${planSnapshot.error}",
+                    'Shared plan stream error: ${sharedPlanSnapshot.error}',
+                  );
+                  return _buildErrorWidget(
+                    'Failed to load shared travel plans.',
                   );
                 }
 
-                // muild the main content UI
-                return _buildContent(context, firstName, photoURL, allPlans);
+                // Combine created and shared travel plans
+                List<TravelPlan> allPlans = _parseTravelPlans(planSnapshot);
+                List<TravelPlan> sharedPlans = _parseTravelPlans(
+                  sharedPlanSnapshot,
+                );
+
+                allPlans.addAll(sharedPlans);
+
+                return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  future: _fetchUserData(currentUser.uid),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return _buildLoadingIndicator();
+                    }
+
+                    if (userSnapshot.hasError) {
+                      print('User data fetch error: ${userSnapshot.error}');
+                      return _buildErrorWidget('Could not load user details.');
+                    }
+
+                    final firstName = _getFirstName(userSnapshot);
+                    final photoURL = currentUser.photoURL;
+
+                    return _buildContent(
+                      context,
+                      firstName,
+                      photoURL,
+                      allPlans,
+                    );
+                  },
+                );
               },
             );
           },

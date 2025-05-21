@@ -71,4 +71,18 @@ class TravelPlanProvider with ChangeNotifier {
     notifyListeners();
     return message;
   }
+
+  // method to share travel plan to another user via username
+  Future<String> sharePlanToUserViaUsername(
+    String travelPlanId,
+    String username,
+  ) async {
+    String message = await firebaseService.sharePlanToUserViaUsername(
+      travelPlanId,
+      username,
+    );
+    print(message);
+    notifyListeners();
+    return message;
+  }
 }
