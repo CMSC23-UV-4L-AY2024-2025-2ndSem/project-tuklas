@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:project_TUKLAS/api/firebase_auth_api.dart';
+import 'package:async/async.dart';
 
 class FirebasePlansApi {
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -19,7 +20,9 @@ class FirebasePlansApi {
         .collection('plans')
         .where('userId', isEqualTo: userId)
         .snapshots()
-        .map((snapshot) => snapshot);
+        .map((snapshot) {
+          return snapshot;
+        });
   }
 
   // method to fetch travel plan shared with the current user
@@ -33,6 +36,11 @@ class FirebasePlansApi {
         .map((snapshots) {
           return snapshots;
         });
+  }
+
+  // method to combine created and shared travel plans
+  Stream<QuerySnapshot<Map<String, dynamic>>> get combinedTravelPlans {
+    return StreamGroup.merge([createdTravelplan, sharedTravelPlan]);
   }
 
   // method to add travel plan in db

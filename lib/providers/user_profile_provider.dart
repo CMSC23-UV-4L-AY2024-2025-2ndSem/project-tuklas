@@ -51,7 +51,7 @@ class UserProfileProvider with ChangeNotifier {
 
   // Optional: create user profile when registering
   Future<void> createInitialProfile(String username, String name) async {
-    await firebaseService.createUserProfile(username: username, name: name);
+    await firebaseService.updateProfileName(username, name);
     notifyListeners();
   }
 
@@ -66,6 +66,11 @@ class UserProfileProvider with ChangeNotifier {
 
   Future<void> updateInterests(List<String> interests, String username) async {
     await firebaseService.editUserInterests(interests, username);
+    notifyListeners();
+  }
+
+  Future<void> updateProfileImage(String base64Image, String username) async {
+    await firebaseService.updateProfileImage(base64Image, username);
     notifyListeners();
   }
 }

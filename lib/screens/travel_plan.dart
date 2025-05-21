@@ -74,6 +74,8 @@ class TravelPlanScreen extends StatelessWidget {
     List<TravelPlan> allPlans,
   ) {
     TravelPlan? upcomingPlan; // holds the next upcoming plan
+    TravelPlan? sharedPlan; // holds the next shared plan
+
     if (allPlans.isNotEmpty) {
       // Find future plans logic (remains the same)
       List<TravelPlan> futurePlans =
@@ -201,9 +203,10 @@ class TravelPlanScreen extends StatelessWidget {
                 _buildUpcomingPlanCard(upcomingPlan),
                 const SizedBox(height: 28),
 
-                // all travel plans header
+                // TODO: add shared travel plans section here
+                // Shared travel plans header
                 Text(
-                  "All Travel Plans",
+                  "Shared Travel Plans",
                   style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -435,7 +438,9 @@ class TravelPlanScreen extends StatelessWidget {
       body: SafeArea(
         bottom: false, // avoid bottom system bar overlap
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: travelPlanProvider.createdTravelPlans(),
+          stream:
+              travelPlanProvider
+                  .createdTravelPlans(), // ensure the stream matches the expected type
           builder: (context, planSnapshot) {
             if (planSnapshot.connectionState == ConnectionState.waiting &&
                 !planSnapshot.hasData) {

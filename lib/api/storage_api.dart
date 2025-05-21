@@ -1,5 +1,4 @@
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
 
 class StorageApi {
   final FirebaseStorage storage = FirebaseStorage.instance;
@@ -16,12 +15,7 @@ class StorageApi {
         fileName,
       ); // reference to Firebase Storage using the user's username
 
-      UploadTask uploadTask;
-      if (kIsWeb) {
-        uploadTask = storageRef.putData(imageFile); // upload the image file
-      } else {
-        uploadTask = storageRef.putFile(imageFile); // upload the image file
-      }
+      UploadTask uploadTask = storageRef.putFile(imageFile);
       TaskSnapshot snapshot = await uploadTask;
       String downloadUrl = await snapshot.ref.getDownloadURL();
 

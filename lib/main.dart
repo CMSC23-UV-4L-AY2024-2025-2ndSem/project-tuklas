@@ -42,22 +42,17 @@ class MyApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/travel-styles') {
-          final args = settings.arguments as Map<String, String>;
+          final username = settings.arguments;
+
           return MaterialPageRoute(
             builder:
-                (context) => TravelStylesPage(
-                  email: args['email'] ?? '',
-                  password: args['password'] ?? '',
-                ),
+                (context) => TravelStylesPage(username: username as String),
           );
         } else if (settings.name == '/travel-interests') {
-          final args = settings.arguments as Map<String, String>;
+          final username = settings.arguments;
+
           return MaterialPageRoute(
-            builder:
-                (context) => InterestsPage(
-                  email: args['email'] ?? '',
-                  password: args['password'] ?? '',
-                ),
+            builder: (context) => InterestsPage(username: username as String),
           );
         }
         return null;

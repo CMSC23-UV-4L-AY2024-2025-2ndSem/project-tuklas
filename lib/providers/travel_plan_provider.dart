@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:project_TUKLAS/api/firebase_auth_api.dart';
 import 'package:project_TUKLAS/api/firebase_plans_api.dart';
@@ -23,15 +22,19 @@ class TravelPlanProvider with ChangeNotifier {
   // method to get travel plans created by the current user
   Stream<QuerySnapshot<Map<String, dynamic>>> createdTravelPlans() {
     print("Fetching created travel plans");
-    print(firebaseService.createdTravelplan.toList());
     return firebaseService.createdTravelplan;
   }
 
   // method to get travel plans shared with the current user
   Stream<QuerySnapshot<Map<String, dynamic>>> sharedTravelPlans() {
     print("Fetching shared travel plans");
-    print(firebaseService.sharedTravelPlan.toList());
     return firebaseService.sharedTravelPlan;
+  }
+
+  // method to get sahred and created travel plans of the current user
+  Stream<QuerySnapshot<Map<String, dynamic>>> allTravelPlans() {
+    print("Fetching all travel plans");
+    return firebaseService.combinedTravelPlans;
   }
 
   // method to add plans and store in Firestore
