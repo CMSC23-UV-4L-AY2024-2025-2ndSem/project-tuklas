@@ -275,9 +275,6 @@ class TravelPlanItem extends StatelessWidget {
             // show loading indicator while image loads
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child; // image loaded
-              if (loadingProgress == null) {
-                return child; // return image if loaded
-              }
               return Container(
                 width: 58,
                 height: 58,

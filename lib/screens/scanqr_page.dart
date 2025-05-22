@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
@@ -34,7 +35,14 @@ class _ScanQRPageState extends State<ScanQRPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan QR Code'),
+        title: Text(
+          'Scan QR Code',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Color(0xFF027572),
       ),
       body: Column(
@@ -69,8 +77,22 @@ class _ScanQRPageState extends State<ScanQRPage> {
             child: Center(
               child:
                   (travelPlanId != null)
-                      ? Text('Travel Plan ID: $travelPlanId')
-                      : const Text('Scan a code'),
+                      ? Text(
+                        'Travel Plan ID: $travelPlanId',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          color: Colors.black,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      )
+                      : Text(
+                        'Scan a code',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          color: Colors.black,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
             ),
           ),
         ],

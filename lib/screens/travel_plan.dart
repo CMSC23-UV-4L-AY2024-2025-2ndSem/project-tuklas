@@ -294,45 +294,6 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
-  Widget _GreetingHeader({required String firstName, String? photoURL}) {
-    return Padding(
-      padding: const EdgeInsets.all(18.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Good morning,",
-                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  firstName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF14645B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.grey,
-            backgroundImage: photoURL != null ? NetworkImage(photoURL) : null,
-            child:
-                photoURL == null
-                    ? Icon(Icons.person, color: Colors.white)
-                    : null,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _UpcomingPlanSection({
     required TravelPlan? upcomingPlan,
     required String Function(List<Timestamp>?) formatDateRange,
@@ -353,30 +314,6 @@ class TravelPlanScreen extends StatelessWidget {
               style: GoogleFonts.poppins(color: Colors.grey.shade600),
             ),
           ),
-        );
-  }
-
-  Widget _AllPlansSection({
-    required List<TravelPlan> allPlans,
-    required String Function(List<Timestamp>?) formatDateRange,
-    required String placeholderAvatarUrl,
-    required Widget Function({String message}) buildNoPlansWidget,
-  }) {
-    return allPlans.isEmpty
-        ? buildNoPlansWidget()
-        : ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: allPlans.length,
-          itemBuilder: (context, index) {
-            final plan = allPlans[index];
-            return TravelPlanItem(
-              title: plan.name,
-              date: formatDateRange(plan.dates),
-              imageUrl: plan.imageUrl ?? placeholderAvatarUrl,
-              plan: plan,
-            );
-          },
         );
   }
 

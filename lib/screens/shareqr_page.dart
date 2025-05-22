@@ -129,7 +129,7 @@ class _GenerateQrPageState extends State<GenerateQrPage> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             color: Colors.black,
-            fontWeight: FontWeight.normal,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
