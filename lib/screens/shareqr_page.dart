@@ -95,14 +95,12 @@ class _GenerateQrPageState extends State<GenerateQrPage> {
             TextButton(
               onPressed: () {
                 if (username != null && username!.isNotEmpty) {
-                  final message = context
-                      .read<TravelPlanProvider>()
-                      .sharePlanToUserViaUsername(
-                        widget.travelPlanId!,
-                        username!,
-                      );
+                  context.read<TravelPlanProvider>().sharePlanToUserViaUsername(
+                    widget.travelPlanId!,
+                    username!,
+                  );
                   Navigator.of(context).pop();
-                  showSnackbar('Sharing to username $username: $message');
+                  showSnackbar('Sharing travel plan to username: $username');
                 } else {
                   showSnackbar('Please enter a valid username');
                 }
@@ -135,56 +133,58 @@ class _GenerateQrPageState extends State<GenerateQrPage> {
           ),
         ),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Display the QR code
-          QrImageView(
-            backgroundColor: Colors.white,
-            data: widget.travelPlanId ?? 'No Travel Plan ID available',
-            version: QrVersions.auto,
-            size: 200.0,
-          ),
-          const SizedBox(height: 20),
-          // Download QR code button
-          ElevatedButton(
-            onPressed: _downloadQRCode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF027572),
-              foregroundColor: Colors.white,
-              minimumSize: Size(350, 56),
-              textStyle: GoogleFonts.poppins(
-                fontSize: 15,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Display the QR code
+            QrImageView(
+              backgroundColor: Colors.white,
+              data: widget.travelPlanId ?? 'No Travel Plan ID available',
+              version: QrVersions.auto,
+              size: 200.0,
+            ),
+            const SizedBox(height: 20),
+            // Download QR code button
+            ElevatedButton(
+              onPressed: _downloadQRCode,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF027572),
+                foregroundColor: Colors.white,
+                minimumSize: Size(350, 56),
+                textStyle: GoogleFonts.poppins(
+                  fontSize: 15,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: Text(
+                'Download QR Code',
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            child: Text(
-              'Download QR Code',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 10),
+            // Share QR code by username button
+            ElevatedButton(
+              onPressed: _shareTravelPlanViaUsername,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFCA4A0C),
+                foregroundColor: Colors.white,
+                minimumSize: Size(350, 56),
+                textStyle: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+              child: Text('Input username'),
             ),
-          ),
-          const SizedBox(height: 10),
-          // Share QR code by username button
-          ElevatedButton(
-            onPressed: _shareTravelPlanViaUsername,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFCA4A0C),
-              foregroundColor: Colors.white,
-              minimumSize: Size(350, 56),
-              textStyle: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            child: Text('Input username'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

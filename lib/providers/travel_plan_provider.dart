@@ -74,7 +74,7 @@ class TravelPlanProvider with ChangeNotifier {
   }
 
   // method to share travel plan to another user via username
-  Future<String> sharePlanToUserViaUsername(
+  Future<String?> sharePlanToUserViaUsername(
     String travelPlanId,
     String username,
   ) async {
