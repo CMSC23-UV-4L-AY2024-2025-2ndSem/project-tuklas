@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:project_TUKLAS/screens/shareqr_page.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/travel_plan_provider.dart';
@@ -242,9 +243,32 @@ class TravelPlanScreen extends StatelessWidget {
                       ({String message = 'No travel plans yet. Add one!'}) =>
                           _buildNoPlansWidget(message: message),
                 ),
-                const SizedBox(
-                  height: 100,
-                ), // ensures content can scroll above bottom nav bar
+                const SizedBox(height: 12),
+
+                // upcoming plan card
+                _buildUpcomingPlanCard(upcomingPlan),
+                const SizedBox(height: 28),
+
+                // list of all plans or "no plans" message
+                allPlans.isEmpty
+                    ? _buildNoPlansWidget(
+                      message: "You have no travel plans yet.",
+                    )
+                    : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: allPlans.length,
+                      itemBuilder: (context, index) {
+                        final plan = allPlans[index];
+                        return TravelPlanItem(
+                          title: plan.name,
+                          date: _formatDateRange(plan.dates),
+                          imageUrl: plan.imageUrl ?? placeholderAvatarUrl,
+                          plan: plan,
+                        );
+                      },
+                    ),
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -253,246 +277,10 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
-  // main entry point for building this screen
-  @override
-  Widget build(BuildContext context) {
-    // get current authenticated user
-    final currentUser = FirebaseAuth.instance.currentUser;
-    // access the travelplanprovider for data logic
-    // listen: false here because we are primarily using it to get a stream or call methods,
-    // not reacting to its direct state changes in this specific build method.
-    // the streambuilder below will handle reacting to data changes.
-    final travelPlanProvider = Provider.of<TravelPlanProvider>(
-      context,
-      listen: false,
-    );
-
-    // if no user is logged in, show a prompt
-    if (currentUser == null) {
-      return Scaffold(
-        body: Center(
-          child: Text("Please log in", style: GoogleFonts.poppins()),
-        ),
-      );
-    }
-
-    // main scaffold for the screen
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        // ensure content is within visible screen area
-        bottom:
-            false, // allow content to go behind a potential floating bottom nav bar
-        // streambuilder listens to real-time updates for travel plans
-        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>?>(
-          stream:
-              travelPlanProvider
-                  .travelplan, // this stream comes from the provider
-          builder: (context, planSnapshot) {
-            // builder function re-runs when stream emits new data
-            // show loading indicator only on initial connection if no data yet
-            if (planSnapshot.connectionState == ConnectionState.waiting &&
-                !planSnapshot.hasData) {
-              return _buildLoadingIndicator();
-            }
-            // log errors from the plan stream but try to continue
-            if (planSnapshot.hasError) {
-              print('plan stream error: ${planSnapshot.error}');
-            }
-            // handle case where stream might be null or has no data yet (e.g., user logs out)
-            // this check is important to prevent errors if currentuser becomes null mid-operation
-            if (!planSnapshot.hasData || planSnapshot.data == null) {
-              if (FirebaseAuth.instance.currentUser == null) {
-                // double check user status
-                return Center(
-                  child: Text(
-                    "user session lost.",
-                    style: GoogleFonts.poppins(),
-                  ),
-                );
-              }
-              // if stream is just empty but user still logged in, futurebuilder below will handle it
-            }
-
-            // futurebuilder fetches user-specific data (like first name) once
-            return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              future: _fetchUserData(
-                currentUser.uid,
-              ), // call to get user document from firestore
-              builder: (context, userSnapshot) {
-                // builder re-runs when future completes
-                // show loading while user data is being fetched
-                if (userSnapshot.connectionState == ConnectionState.waiting) {
-                  return _buildLoadingIndicator();
-                }
-                // if fetching user data fails, show an error (this is a more critical error)
-                if (userSnapshot.hasError) {
-                  print('user data fetch error: ${userSnapshot.error}');
-                  return _buildErrorWidget('could not load user details.');
-                }
-
-                // ---- data processing stage ----
-                String firstName = 'User'; // default name
-                String? photoURL =
-                    currentUser.photoURL; // get photo from auth user data
-
-                // if user document exists in firestore, get first name
-                if (userSnapshot.hasData && userSnapshot.data!.exists) {
-                  final userData =
-                      userSnapshot.data!.data(); // firestore data map
-                  firstName =
-                      userData?['fname'] as String? ??
-                      'User'; // safely get 'fname'
-                  // photoURL = userData?['photoURL'] as String? ?? photoURL; // optionally get photo from firestore too
-                } else {
-                  // log if user document wasn't found but proceed with defaults
-                  print('user document not found for uid: ${currentUser.uid}');
-                }
-
-                // process travel plans from the stream data
-                List<TravelPlan> allPlans = []; // initialize empty list
-                if (planSnapshot.hasData && planSnapshot.data != null) {
-                  // ensure stream data is available
-                  allPlans =
-                      planSnapshot.data!.docs
-                          .map((doc) {
-                            // iterate over firestore documents
-                            final data = doc.data(); // get data from document
-                            if (data == null)
-                              return null; // safety for null document data
-                            data['id'] =
-                                doc.id; // IMPORTANT: add firestore document id into the map
-                            try {
-                              // convert firestore map data to a structured travelplan object
-                              return TravelPlan.fromJson(data);
-                            } catch (e) {
-                              // log any errors during parsing and skip this faulty plan
-                              print(
-                                "error parsing travelplan from firestore: $e, data: $data",
-                              );
-                              return null;
-                            }
-                          })
-                          .whereType<TravelPlan>()
-                          .toList(); // filter out any nulls from parsing errors
-                }
-
-                // log if displaying content despite a plan stream error (for debugging)
-                if (planSnapshot.hasError) {
-                  print(
-                    "displaying content despite plan stream error: ${planSnapshot.error}",
-                  );
-                }
-
-                // all data (user info, plans) is ready, build the main content ui
-                return _buildContent(context, firstName, photoURL, allPlans);
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-// --- widget for the fixed header (greeting and search) ---
-class _GreetingHeader extends StatelessWidget {
-  final String firstName;
-  final String? photoURL;
-
-  const _GreetingHeader({required this.firstName, this.photoURL});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18.0, 15.0, 18.0, 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // user greeting and avatar
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Good morning,",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: const Color.fromARGB(255, 0, 0, 0),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      firstName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF14645B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey,
-                backgroundImage:
-                    (photoURL != null && photoURL!.isNotEmpty)
-                        ? NetworkImage(photoURL!)
-                        : null,
-                child:
-                    (photoURL == null || photoURL!.isEmpty)
-                        ? const Icon(Icons.person, color: Colors.white)
-                        : null,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // search input field
-          TextField(
-            style: GoogleFonts.poppins(),
-            decoration: InputDecoration(
-              hintText: 'Search',
-              hintStyle: GoogleFonts.poppins(),
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(color: Colors.grey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(color: Colors.grey),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 0,
-                horizontal: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// --- widget for the upcoming plan section (header and card) ---
-class _UpcomingPlanSection extends StatelessWidget {
-  final TravelPlan? upcomingPlan; // can be null if no upcoming plans
-  final String Function(List<Timestamp>?)
-  formatDateRange; // function for date formatting
-  final String placeholderImageUrl; // fallback image url
-
-  const _UpcomingPlanSection({
-    this.upcomingPlan,
-    required this.formatDateRange,
-    required this.placeholderImageUrl,
-  });
-
-  // builds the actual card for the upcoming plan
-  Widget _buildCard() {
-    final String defaultImage = placeholderImageUrl;
+  // builds the card for the single upcoming plan
+  Widget _buildUpcomingPlanCard(TravelPlan? upcomingPlan) {
+    // ... (implementation remains the same)
+    final String defaultImage = placeholderImageUrl; // fallback image
 
     if (upcomingPlan == null) {
       // if no plan, show placeholder
@@ -645,62 +433,124 @@ class _UpcomingPlanSection extends StatelessWidget {
       ],
     );
   }
-}
 
-// --- widget for the "all plans" list section ---
-class _AllPlansSection extends StatelessWidget {
-  final List<TravelPlan> allPlans;
-  final String Function(List<Timestamp>?) formatDateRange;
-  final String placeholderAvatarUrl;
-  final Widget Function({String message})
-  buildNoPlansWidget; // function to build 'no plans' ui
+  String _getFirstName(
+    AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> userSnapshot,
+  ) {
+    if (userSnapshot.hasData && userSnapshot.data!.exists) {
+      final userData = userSnapshot.data!.data();
+      return userData?['fname'] as String? ?? 'User';
+    }
+    return 'User';
+  }
 
-  const _AllPlansSection({
-    required this.allPlans,
-    required this.formatDateRange,
-    required this.placeholderAvatarUrl,
-    required this.buildNoPlansWidget,
-  });
+  List<TravelPlan> _parseTravelPlans(
+    AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> planSnapshot,
+  ) {
+    return (planSnapshot.data?.docs ?? [])
+        .map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          try {
+            return TravelPlan.fromJson(data);
+          } catch (e) {
+            print("Error parsing travel plan from firestore: $e, Data: $data");
+            return null;
+          }
+        })
+        .whereType<TravelPlan>()
+        .toList();
+  }
 
+  // main build method
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "All Travel Plans",
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: const Color.fromARGB(221, 0, 0, 0),
-          ),
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final travelPlanProvider = Provider.of<TravelPlanProvider>(
+      context,
+      listen: false,
+    );
+
+    if (currentUser == null) {
+      return Scaffold(
+        body: Center(
+          child: Text("Please log in", style: GoogleFonts.poppins()),
         ),
-        const SizedBox(height: 10),
-        // either show 'no plans' message or the list of plans
-        allPlans.isEmpty
-            ? buildNoPlansWidget(
-              message: "You have no travel plans yet.",
-            ) // call passed builder function
-            : ListView.builder(
-              shrinkWrap:
-                  true, // essential for listview inside singlechildscrollview
-              physics:
-                  const NeverScrollableScrollPhysics(), // disable internal scrolling of listview
-              itemCount: allPlans.length,
-              itemBuilder: (context, index) {
-                final plan = allPlans[index];
-                // each item in the list is a travelplanitem widget
-                return TravelPlanItem(
-                  title: plan.name,
-                  date: formatDateRange(plan.dates), // use passed formatter
-                  imageUrl:
-                      plan.imageUrl ??
-                      placeholderAvatarUrl, // fallback to placeholder
-                  plan: plan,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        bottom: false,
+        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: travelPlanProvider.createdTravelPlans(),
+          builder: (context, planSnapshot) {
+            if (planSnapshot.connectionState == ConnectionState.waiting) {
+              return _buildLoadingIndicator();
+            }
+
+            if (planSnapshot.hasError) {
+              print('Plan stream error: ${planSnapshot.error}');
+              return _buildErrorWidget('Failed to load travel plans.');
+            }
+
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream:
+                  travelPlanProvider
+                      .sharedTravelPlans(), // Stream for shared plans
+              builder: (context, sharedPlanSnapshot) {
+                if (sharedPlanSnapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return _buildLoadingIndicator();
+                }
+
+                if (sharedPlanSnapshot.hasError) {
+                  print(
+                    'Shared plan stream error: ${sharedPlanSnapshot.error}',
+                  );
+                  return _buildErrorWidget(
+                    'Failed to load shared travel plans.',
+                  );
+                }
+
+                // Combine created and shared travel plans
+                List<TravelPlan> allPlans = _parseTravelPlans(planSnapshot);
+                List<TravelPlan> sharedPlans = _parseTravelPlans(
+                  sharedPlanSnapshot,
+                );
+
+                allPlans.addAll(sharedPlans);
+
+                return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  future: _fetchUserData(currentUser.uid),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return _buildLoadingIndicator();
+                    }
+
+                    if (userSnapshot.hasError) {
+                      print('User data fetch error: ${userSnapshot.error}');
+                      return _buildErrorWidget('Could not load user details.');
+                    }
+
+                    final firstName = _getFirstName(userSnapshot);
+                    final photoURL = currentUser.photoURL;
+
+                    return _buildContent(
+                      context,
+                      firstName,
+                      photoURL,
+                      allPlans,
+                    );
+                  },
                 );
               },
-            ),
-      ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -754,9 +604,19 @@ class TravelPlanItem extends StatelessWidget {
               leading: Icon(Icons.share_outlined, color: Colors.grey.shade700),
               title: Text('Share', style: GoogleFonts.poppins(fontSize: 15)),
               onTap: () {
-                Navigator.pop(bc); // close sheet using its context
-                // todo: implement share functionality
-                print('share tapped for plan: ${planToShowOptionsFor.id}');
+                Navigator.pop(context); // close the bottom sheet
+                // TO DO: implement share functionality
+                print('Share tapped for plan: ${planToShowOptionsFor.id}');
+                // navigate to generate QR page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => GenerateQrPage(
+                          travelPlanId: planToShowOptionsFor.id,
+                        ),
+                  ),
+                );
               },
             ),
             // edit option
@@ -863,18 +723,19 @@ class TravelPlanItem extends StatelessWidget {
                     return; // stop if no valid id
                   }
                   try {
-                    // call the deleteplan method from the provider
-                    // listen: false is important when calling methods that don't need to trigger a rebuild of this specific widget
-                    await Provider.of<TravelPlanProvider>(
+                    // access the provider to call the delete method
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    final message = await Provider.of<TravelPlanProvider>(
                       context,
                       listen: false,
-                    ).deletePlan(planId);
+                    ).deletePlan(planId, currentUser!.uid);
+
                     if (context.mounted) {
                       // show success message
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            '"${planToShowOptionsFor.name}" deleted.',
+                            '"${planToShowOptionsFor.name}": $message',
                             style: GoogleFonts.poppins(),
                           ),
                           backgroundColor: Colors.green,

@@ -13,6 +13,10 @@ class UserAuthProvider with ChangeNotifier {
     userStream = authService.getUserStream();
   }
 
+  String getCurrentUserId() {
+    return authService.getCurrentUserId();
+  }
+
   Future<String> signIn({
     required String email,
     required String password,
@@ -22,24 +26,8 @@ class UserAuthProvider with ChangeNotifier {
     return message;
   }
 
-  Future<String> signUp(
-    String email,
-    String password,
-    String fName,
-    String lName,
-    String uName,
-    List<String> styles,
-    List<String> interests,
-  ) async {
-    String message = await authService.signUp(
-      email,
-      password,
-      fName,
-      lName,
-      uName,
-      styles,
-      interests,
-    );
+  Future<String> signUp(String email, String username, String password) async {
+    String message = await authService.signUp(email, username, password);
     notifyListeners();
     return message;
   }
@@ -61,10 +49,10 @@ class UserAuthProvider with ChangeNotifier {
     return email!;
   }
 
-  // method to upload image from setting up profile
-  Future<void> uploadUserImage(dynamic image, String username) async {
-    final message = await storageService.uploadImage(image, username);
-    print(message);
-    notifyListeners();
-  }
+  // method to upload image to Firebase Storage
+  // Future<void> uploadUserImage(dynamic image, String username) async {
+  //   final message = await storageService.uploadImage(image, username);
+  //   print(message);
+  //   notifyListeners();
+  // }
 }

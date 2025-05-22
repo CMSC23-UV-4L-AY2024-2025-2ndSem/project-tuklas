@@ -8,6 +8,13 @@ class FirebaseAuthAPI {
     return auth.authStateChanges();
   }
 
+  String getCurrentUserId() {
+    if (auth.currentUser == null) {
+      return 'User not logged in!';
+    }
+    return auth.currentUser!.uid;
+  }
+
   Future<String> signIn(String email, String password) async {
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
@@ -17,15 +24,7 @@ class FirebaseAuthAPI {
     }
   }
 
-  Future<String> signUp(
-    String email,
-    String password,
-    String fName,
-    String lName,
-    String uName,
-    List<String> styles,
-    List<String> interests,
-  ) async {
+  Future<String> signUp(String email, String username, String password) async {
     try {
       UserCredential userCreds = await auth.createUserWithEmailAndPassword(
         email: email,
@@ -35,13 +34,9 @@ class FirebaseAuthAPI {
       String uid = userCreds.user!.uid;
 
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'fname': fName,
-        'lname': lName,
-        'username': uName,
         'email': email,
         'id': uid,
-        'styles': styles,
-        'interests': interests,
+        'username': username,
       });
 
       return 'Success!';

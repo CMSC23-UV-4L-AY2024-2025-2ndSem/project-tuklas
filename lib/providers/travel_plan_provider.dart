@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/api/firebase_auth_api.dart';
 import 'package:project_TUKLAS/api/firebase_plans_api.dart';
 import 'package:project_TUKLAS/models/travel_plan_model.dart';
 
 class TravelPlanProvider with ChangeNotifier {
   late Stream<QuerySnapshot> _travelsStream;
   final FirebasePlansApi firebaseService = FirebasePlansApi(); //initialize API
+  final FirebaseAuthAPI authService = FirebaseAuthAPI();
 
   TravelPlanProvider() {
     fetchTravelPlans();
@@ -18,27 +19,22 @@ class TravelPlanProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // method to get travel plans for the current user
-  Stream<QuerySnapshot<Map<String, dynamic>>> get travelplan {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      // return an empty stream of the correct type if user is null
-      return FirebaseFirestore.instance
-          .collection('plans')
-          .where('userId', isEqualTo: '__nouser__') // Use an impossible value
-          .snapshots()
-          // cast the resulting stream's snapshot type
-          .map((snapshot) => snapshot);
-    }
+  // method to get travel plans created by the current user
+  Stream<QuerySnapshot<Map<String, dynamic>>> createdTravelPlans() {
+    print("Fetching created travel plans");
+    return firebaseService.createdTravelplan;
+  }
 
-    // fetch the plans for the current user and ensure the stream type is correct
-    return FirebaseFirestore.instance
-        .collection('plans')
-        .where('userId', isEqualTo: user.uid)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot;
-        });
+  // method to get travel plans shared with the current user
+  Stream<QuerySnapshot<Map<String, dynamic>>> sharedTravelPlans() {
+    print("Fetching shared travel plans");
+    return firebaseService.sharedTravelPlan;
+  }
+
+  // method to get sahred and created travel plans of the current user
+  Stream<QuerySnapshot<Map<String, dynamic>>> allTravelPlans() {
+    print("Fetching all travel plans");
+    return firebaseService.combinedTravelPlans;
   }
 
   // method to add plans and store in Firestore
@@ -61,9 +57,33 @@ class TravelPlanProvider with ChangeNotifier {
   }
 
   // method to delete plans and update in Firestore
-  Future<void> deletePlan(String id) async {
-    String message = await firebaseService.deletePlan(id);
+  Future<String> deletePlan(String id, String userId) async {
+    String message = await firebaseService.deletePlan(id, userId);
     print(message);
     notifyListeners();
+    return message;
+  }
+
+  // method to share plan to user
+  Future<String?> sharePlan(String? travelPlanId) async {
+    final userId = authService.getCurrentUserId();
+    String message = await firebaseService.sharePlan(travelPlanId, userId);
+    print(message);
+    notifyListeners();
+    return message;
+  }
+
+  // method to share travel plan to another user via username
+  Future<String?> sharePlanToUserViaUsername(
+    String travelPlanId,
+    String username,
+  ) async {
+    String message = await firebaseService.sharePlanToUserViaUsername(
+      travelPlanId,
+      username,
+    );
+    print(message);
+    notifyListeners();
+    return message;
   }
 }

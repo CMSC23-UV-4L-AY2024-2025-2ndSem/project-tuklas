@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/models/travel_plan_model.dart';
 import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
 import 'package:project_TUKLAS/screens/map_search_page.dart';
+import 'package:project_TUKLAS/screens/scanqr_page.dart';
 import 'package:provider/provider.dart';
 
 //this page allows the user to add a new travel plan
@@ -80,6 +81,7 @@ class _AddtravelPageState extends State<AddtravelPage> {
                 const SizedBox(height: 20),
                 Center(child: addPlanButton),
                 const SizedBox(height: 20),
+                Center(child: scanQRButton),
               ],
             ),
           ),
@@ -445,6 +447,33 @@ class _AddtravelPageState extends State<AddtravelPage> {
     },
     child: Text(
       "Add",
+      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+  );
+
+  // button to scan QR code
+  Widget get scanQRButton => ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Color(0xFF027572),
+      foregroundColor: Colors.white,
+      minimumSize: Size(350, 56),
+      textStyle: GoogleFonts.poppins(
+        fontSize: 15,
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    onPressed: () {
+      // add feature that enables user to scan a QR code
+      // pass current user ID to the QR code scanner
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ScanQRPage()),
+      );
+      print("Scanning QR code...");
+    },
+    child: Text(
+      "Scan QR Code",
       style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
     ),
   );
