@@ -1,65 +1,52 @@
-// lib/screens/travel_plan.dart
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:project_TUKLAS/screens/shareqr_page.dart';
+import 'package:project_TUKLAS/screens/travel_plan_item.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/travel_plan_provider.dart';
 import '../models/travel_plan_model.dart';
-import 'package:project_TUKLAS/screens/itinerary.dart';
 import 'user_profile.dart';
 
 class TravelPlanScreen extends StatelessWidget {
   const TravelPlanScreen({super.key});
 
-  // turns a list of firestore timestamps into a readable date range string
-  // e.g., "jun 1" or "jun 1–7" or "dec 30–jan 5"
   String _formatDateRange(List<Timestamp>? dates) {
-    if (dates == null || dates.isEmpty) return 'n/a'; // nothing to format
-    String start = DateFormat(
-      'MMM d',
-    ).format(dates.first.toDate()); // format the start
+    if (dates == null || dates.isEmpty) return 'n/a';
+    String start = DateFormat('MMM d').format(dates.first.toDate());
     if (dates.length > 1) {
-      // if there's more than one date, assume it's a range
       DateTime startDate = dates.first.toDate();
-      DateTime endDate = dates.last.toDate(); // using last date for range end
-      // if it's actually a single day event marked with two same timestamps
+      DateTime endDate = dates.last.toDate();
       if (startDate.year == endDate.year &&
           startDate.month == endDate.month &&
           startDate.day == endDate.day) {
-        return start; // just show the single day
+        return start;
       }
-      // if end date is in a different month, include month in end string
       String endFormat = (startDate.month == endDate.month) ? 'd' : 'MMM d';
       String end = DateFormat(endFormat).format(endDate);
-      return '$start–$end'; // combine start and end
+      return '$start–$end';
     }
-    return start; // only one date, just return it formatted
+    return start;
   }
 
-  // default image url
   final String placeholderImageUrl =
       'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80';
   final String placeholderAvatarUrl =
       'https://via.placeholder.com/60x60.png?text=P';
 
-  // simple spinning loader widget
   Widget _buildLoadingIndicator() {
     return const Center(
       child: CircularProgressIndicator(color: Color(0xFF14645B)),
     );
   }
 
-  // simple error display widget
   Widget _buildErrorWidget(String error) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Text(
-          'error: $error', // show the error passed in
+          'error: $error',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(color: Colors.red.shade800),
         ),
@@ -67,7 +54,6 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
-  // displays a message when there are no travel plans
   Widget _buildNoPlansWidget({
     String message = 'No travel plans yet. Add one!',
   }) {
@@ -92,346 +78,8 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
-  // fetches specific user document from 'users' collection in firestore
   Future<DocumentSnapshot<Map<String, dynamic>>> _fetchUserData(String uid) {
     return FirebaseFirestore.instance.collection('users').doc(uid).get();
-  }
-
-  // main widget that constructs the screen's content based on data
-  Widget _buildContent(
-    BuildContext context,
-    String firstName,
-    String? photoURL,
-    List<TravelPlan> allPlans, // list of processed travel plan objects
-  ) {
-    TravelPlan? upcomingPlan; // to store the determined upcoming plan
-    if (allPlans.isNotEmpty) {
-      // filter plans to find those starting today or in the future
-      List<TravelPlan> futurePlans =
-          allPlans.where((plan) {
-            if (plan.dates.isEmpty) return false; // can't determine if no dates
-            DateTime planStartDate = plan.dates.first.toDate();
-            DateTime today = DateTime.now();
-            DateTime todayStart = DateTime(today.year, today.month, today.day);
-            return !planStartDate.isBefore(
-              todayStart,
-            ); // true if start date is today or later
-          }).toList();
-
-      if (futurePlans.isNotEmpty) {
-        // sort future plans to get the earliest one first
-        futurePlans.sort((a, b) => a.dates.first.compareTo(b.dates.first));
-        upcomingPlan = futurePlans.first; // this is our next upcoming plan
-      }
-    }
-
-    // overall screen layout: fixed header, then scrollable content
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // non-scrollable header part
-        _GreetingHeader(firstName: firstName, photoURL: photoURL),
-        // scrollable part
-        // fixed header section
-        Padding(
-          // add padding around the fixed section
-          padding: const EdgeInsets.fromLTRB(
-            18.0,
-            15.0,
-            18.0,
-            20.0,
-          ), // adjust bottom padding as needed
-          child: Column(
-            // inner Column for fixed items
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Good morning,",
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: const Color.fromARGB(255, 0, 0, 0),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          firstName, // Ensure firstName is defined in your code
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF14645B),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      // Navigate to the UserProfilePage
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => UserProfilePage(
-                                username: 'your_username_here',
-                              ), // Pass the username or any identifier
-                        ),
-                      );
-                    },
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.grey,
-                      child: Icon(Icons.person, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // search Bar
-              TextField(
-                style: GoogleFonts.poppins(),
-                decoration: InputDecoration(
-                  hintText: 'Search',
-                  hintStyle: GoogleFonts.poppins(),
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 0,
-                    horizontal: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // section for the single upcoming plan card
-                _UpcomingPlanSection(
-                  upcomingPlan: upcomingPlan,
-                  formatDateRange:
-                      _formatDateRange, // pass down the date formatting function
-                  placeholderImageUrl:
-                      placeholderImageUrl, // pass down the placeholder
-                ),
-                const SizedBox(height: 28),
-                // section for the list of all plans
-                _AllPlansSection(
-                  allPlans: allPlans,
-                  formatDateRange: _formatDateRange, // pass down date formatter
-                  placeholderAvatarUrl:
-                      placeholderAvatarUrl, // pass down avatar placeholder
-                  // pass down the function that builds the 'no plans' message
-                  buildNoPlansWidget:
-                      ({String message = 'No travel plans yet. Add one!'}) =>
-                          _buildNoPlansWidget(message: message),
-                ),
-                const SizedBox(height: 12),
-
-                // upcoming plan card
-                _buildUpcomingPlanCard(upcomingPlan),
-                const SizedBox(height: 28),
-
-                // list of all plans or "no plans" message
-                allPlans.isEmpty
-                    ? _buildNoPlansWidget(
-                      message: "You have no travel plans yet.",
-                    )
-                    : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: allPlans.length,
-                      itemBuilder: (context, index) {
-                        final plan = allPlans[index];
-                        return TravelPlanItem(
-                          title: plan.name,
-                          date: _formatDateRange(plan.dates),
-                          imageUrl: plan.imageUrl ?? placeholderAvatarUrl,
-                          plan: plan,
-                        );
-                      },
-                    ),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // builds the card for the single upcoming plan
-  Widget _buildUpcomingPlanCard(TravelPlan? upcomingPlan) {
-    // ... (implementation remains the same)
-    final String defaultImage = placeholderImageUrl; // fallback image
-
-    if (upcomingPlan == null) {
-      // if no plan, show placeholder
-      return Container(
-        height: 100,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Center(
-          child: Text(
-            'No upcoming plans.',
-            style: GoogleFonts.poppins(color: Colors.grey.shade600),
-          ),
-        ),
-      );
-    }
-
-    // determine image to display: plan's image or default
-    final String imageUrlToDisplay =
-        upcomingPlan!.imageUrl ?? defaultImage; // upcomingPlan is not null here
-
-    // card with rounded corners and image background
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        height: 190,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(imageUrlToDisplay),
-            fit: BoxFit.cover,
-            onError:
-                (exception, stackTrace) =>
-                    print('error loading upcoming plan image: $exception'),
-          ),
-          color: Colors.grey.shade300, // fallback bg if image fails
-        ),
-        // stack for overlaying text/avatars on the image
-        child: Stack(
-          children: [
-            // bottom gradient for text readability
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: const [0.5, 1.0],
-                  ),
-                ),
-              ),
-            ),
-            // plan title and date text
-            Positioned(
-              left: 16,
-              bottom: 16,
-              right: 80, // positioned to avoid avatar overlap
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    upcomingPlan!.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        const Shadow(
-                          blurRadius: 4.0,
-                          color: Colors.black54,
-                          offset: Offset(1, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _formatDateRange(
-                      upcomingPlan!.dates,
-                    ), // use passed formatter
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.95),
-                      shadows: [
-                        const Shadow(
-                          blurRadius: 3.0,
-                          color: Colors.black45,
-                          offset: Offset(1, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // placeholder participant avatars
-            Positioned(
-              bottom: 18,
-              right: 16,
-              child: Row(
-                children:
-                    List.generate(
-                      3,
-                      (index) => Align(
-                        widthFactor: 0.65, // for overlapping effect
-                        child: CircleAvatar(
-                          radius: 17,
-                          backgroundColor: Colors.white, // white border
-                          child: CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.grey.shade300,
-                            child: Icon(
-                              Icons.person,
-                              size: 18,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ).reversed.toList(), // reversed for correct visual stacking
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Upcoming Travel Plan",
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: const Color.fromARGB(221, 0, 0, 0),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildCard(), // build the actual card
-      ],
-    );
   }
 
   String _getFirstName(
@@ -454,7 +102,7 @@ class TravelPlanScreen extends StatelessWidget {
           try {
             return TravelPlan.fromJson(data);
           } catch (e) {
-            print("Error parsing travel plan from firestore: $e, Data: $data");
+            print("Error parsing travel plan: $e, Data: $data");
             return null;
           }
         })
@@ -462,7 +110,114 @@ class TravelPlanScreen extends StatelessWidget {
         .toList();
   }
 
-  // main build method
+  Widget _buildUpcomingPlanCard(TravelPlan? upcomingPlan) {
+    final String defaultImage = placeholderImageUrl;
+
+    if (upcomingPlan == null) {
+      return Container(
+        height: 100,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Center(
+          child: Text(
+            'No upcoming plans.',
+            style: GoogleFonts.poppins(color: Colors.grey.shade600),
+          ),
+        ),
+      );
+    }
+
+    final String imageUrlToDisplay = upcomingPlan.imageUrl ?? defaultImage;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 190,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(imageUrlToDisplay),
+            fit: BoxFit.cover,
+          ),
+          color: Colors.grey.shade300,
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 16,
+              bottom: 16,
+              right: 80,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    upcomingPlan.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    _formatDateRange(upcomingPlan.dates),
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.95),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              bottom: 18,
+              right: 16,
+              child: Row(
+                children:
+                    List.generate(
+                      3,
+                      (index) => Align(
+                        widthFactor: 0.65,
+                        child: CircleAvatar(
+                          radius: 17,
+                          backgroundColor: Colors.white,
+                          child: CircleAvatar(
+                            radius: 15,
+                            backgroundColor: Colors.grey.shade300,
+                            child: Icon(
+                              Icons.person,
+                              size: 18,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ).reversed.toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -489,37 +244,24 @@ class TravelPlanScreen extends StatelessWidget {
             if (planSnapshot.connectionState == ConnectionState.waiting) {
               return _buildLoadingIndicator();
             }
-
             if (planSnapshot.hasError) {
-              print('Plan stream error: ${planSnapshot.error}');
               return _buildErrorWidget('Failed to load travel plans.');
             }
 
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream:
-                  travelPlanProvider
-                      .sharedTravelPlans(), // Stream for shared plans
-              builder: (context, sharedPlanSnapshot) {
-                if (sharedPlanSnapshot.connectionState ==
-                    ConnectionState.waiting) {
+              stream: travelPlanProvider.sharedTravelPlans(),
+              builder: (context, sharedSnapshot) {
+                if (sharedSnapshot.connectionState == ConnectionState.waiting) {
                   return _buildLoadingIndicator();
                 }
-
-                if (sharedPlanSnapshot.hasError) {
-                  print(
-                    'Shared plan stream error: ${sharedPlanSnapshot.error}',
-                  );
-                  return _buildErrorWidget(
-                    'Failed to load shared travel plans.',
-                  );
+                if (sharedSnapshot.hasError) {
+                  return _buildErrorWidget('Failed to load shared plans.');
                 }
 
-                // Combine created and shared travel plans
                 List<TravelPlan> allPlans = _parseTravelPlans(planSnapshot);
                 List<TravelPlan> sharedPlans = _parseTravelPlans(
-                  sharedPlanSnapshot,
+                  sharedSnapshot,
                 );
-
                 allPlans.addAll(sharedPlans);
 
                 return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -529,9 +271,7 @@ class TravelPlanScreen extends StatelessWidget {
                         ConnectionState.waiting) {
                       return _buildLoadingIndicator();
                     }
-
                     if (userSnapshot.hasError) {
-                      print('User data fetch error: ${userSnapshot.error}');
                       return _buildErrorWidget('Could not load user details.');
                     }
 
@@ -551,6 +291,238 @@ class TravelPlanScreen extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  Widget _GreetingHeader({required String firstName, String? photoURL}) {
+    return Padding(
+      padding: const EdgeInsets.all(18.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Good morning,",
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  firstName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF14645B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.grey,
+            backgroundImage: photoURL != null ? NetworkImage(photoURL) : null,
+            child:
+                photoURL == null
+                    ? Icon(Icons.person, color: Colors.white)
+                    : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _UpcomingPlanSection({
+    required TravelPlan? upcomingPlan,
+    required String Function(List<Timestamp>?) formatDateRange,
+    required String placeholderImageUrl,
+  }) {
+    return upcomingPlan != null
+        ? _buildUpcomingPlanCard(upcomingPlan)
+        : Container(
+          height: 100,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Center(
+            child: Text(
+              'No upcoming plans.',
+              style: GoogleFonts.poppins(color: Colors.grey.shade600),
+            ),
+          ),
+        );
+  }
+
+  Widget _AllPlansSection({
+    required List<TravelPlan> allPlans,
+    required String Function(List<Timestamp>?) formatDateRange,
+    required String placeholderAvatarUrl,
+    required Widget Function({String message}) buildNoPlansWidget,
+  }) {
+    return allPlans.isEmpty
+        ? buildNoPlansWidget()
+        : ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: allPlans.length,
+          itemBuilder: (context, index) {
+            final plan = allPlans[index];
+            return TravelPlanItem(
+              title: plan.name,
+              date: formatDateRange(plan.dates),
+              imageUrl: plan.imageUrl ?? placeholderAvatarUrl,
+              plan: plan,
+            );
+          },
+        );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    String firstName,
+    String? photoURL,
+    List<TravelPlan> allPlans,
+  ) {
+    TravelPlan? upcomingPlan;
+    if (allPlans.isNotEmpty) {
+      List<TravelPlan> futurePlans =
+          allPlans.where((plan) {
+            if (plan.dates.isEmpty) return false;
+            DateTime planStart = plan.dates.first.toDate();
+            DateTime today = DateTime.now();
+            return !planStart.isBefore(
+              DateTime(today.year, today.month, today.day),
+            );
+          }).toList();
+
+      if (futurePlans.isNotEmpty) {
+        futurePlans.sort((a, b) => a.dates.first.compareTo(b.dates.first));
+        upcomingPlan = futurePlans.first;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18.0, 15.0, 18.0, 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Good morning,",
+                          style: GoogleFonts.poppins(fontSize: 14),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          firstName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF14645B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => UserProfilePage(
+                                username: 'your_username_here',
+                              ),
+                        ),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey,
+                      child: Icon(Icons.person, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                style: GoogleFonts.poppins(),
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  hintStyle: GoogleFonts.poppins(),
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 18.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _UpcomingPlanSection(
+                  upcomingPlan: upcomingPlan,
+                  formatDateRange: _formatDateRange,
+                  placeholderImageUrl: placeholderImageUrl,
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  "All Travel Plans",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF14645B),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                allPlans.isEmpty
+                    ? _buildNoPlansWidget(
+                      message: "No travel plans yet. Add one!",
+                    )
+                    : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: allPlans.length,
+                      itemBuilder: (context, index) {
+                        final plan = allPlans[index];
+                        return TravelPlanItem(
+                          title: plan.name,
+                          date: _formatDateRange(plan.dates),
+                          imageUrl: plan.imageUrl ?? placeholderAvatarUrl,
+                          plan: plan,
+                        );
+                      },
+                    ),
+                const SizedBox(height: 100),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

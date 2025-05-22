@@ -18,9 +18,8 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserAuthProvider()),
-        Provider<UserAuthProvider>(create: (_) => UserAuthProvider()),
-        Provider<UserProfileProvider>(create: (_) => UserProfileProvider()),
         ChangeNotifierProvider(create: (_) => TravelPlanProvider()),
+        Provider<UserProfileProvider>(create: (_) => UserProfileProvider()),
       ],
       child: const MyApp(),
     ),
