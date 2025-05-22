@@ -12,37 +12,55 @@ class ScanQRPage extends StatefulWidget {
 
 class _ScanQRPageState extends State<ScanQRPage> {
   String? travelPlanId;
+  bool isProcessing = false; //flag to prevent multiple scans
 
   // Method to add user id to plan['sharedWith']
-  Future<void> addUserToPlan(String? travelPlanId) async {
-    if (travelPlanId == null) return;
+  Future<String?> addUserToPlan(String? travelPlanId) async {
+    if (travelPlanId == null) return null;
 
     try {
       String? message = await context.read<TravelPlanProvider>().sharePlan(
         travelPlanId,
       );
       print(message);
+      return message;
     } catch (e) {
       print('Error saving shared plan via provider: $e');
+      return 'Error saving shared plan via provider: $e';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan QR Code'),
+        backgroundColor: Color(0xFF027572),
+      ),
       body: Column(
         children: <Widget>[
           Expanded(
             flex: 5,
             child: MobileScanner(
-              onDetect: (capture) {
+              onDetect: (capture) async {
+                if (isProcessing) return;
+                isProcessing = true;
+
                 final List<Barcode> barcodes = capture.barcodes;
                 if (barcodes.isNotEmpty) {
                   setState(() {
                     travelPlanId = barcodes.first.rawValue;
                   });
-                  addUserToPlan(travelPlanId);
+                  //display return message
+                  final message = await addUserToPlan(travelPlanId);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Travel Plan ID: $travelPlanId: $message'),
+                    ),
+                  );
+                  await Future.delayed(Duration(seconds: 2));
                 }
+                isProcessing = false;
               },
             ),
           ),

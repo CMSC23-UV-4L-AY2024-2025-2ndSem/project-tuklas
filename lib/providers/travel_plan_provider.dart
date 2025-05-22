@@ -57,10 +57,11 @@ class TravelPlanProvider with ChangeNotifier {
   }
 
   // method to delete plans and update in Firestore
-  Future<void> deletePlan(String id) async {
-    String message = await firebaseService.deletePlan(id);
+  Future<String> deletePlan(String id, String userId) async {
+    String message = await firebaseService.deletePlan(id, userId);
     print(message);
     notifyListeners();
+    return message;
   }
 
   // method to share plan to user

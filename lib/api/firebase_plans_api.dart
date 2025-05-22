@@ -82,10 +82,20 @@ class FirebasePlansApi {
   }
 
   //method to delete existing travel plan in db
-  Future<String> deletePlan(String id) async {
+  Future<String> deletePlan(String id, String userId) async {
     try {
+      // Check if the user is the owner of the plan
+      final planSnapshot = await db.collection('plans').doc(id).get();
+      if (!planSnapshot.exists) {
+        return "Plan not found.";
+      }
+      final planData = planSnapshot.data();
+      if (planData?['userId'] != userId) {
+        return "You do not have permission to delete this plan.";
+      }
+      // Proceed to delete the plan
       await db.collection('plans').doc(id).delete();
-      return "Successfully deleted item from plans!";
+      return "successfully deleted item from plans!";
     } on FirebaseException catch (e) {
       return "Error on ${e.code}: ${e.message}";
     }
@@ -100,7 +110,7 @@ class FirebasePlansApi {
       await db.collection('plans').doc(travelPlanId).update({
         'sharedWith': FieldValue.arrayUnion([userId]),
       });
-      return "Plan shared successfully!";
+      return "Plan added successfully!";
     } on FirebaseException catch (e) {
       return "Error on ${e.code}: ${e.message}";
     } catch (e) {

@@ -694,17 +694,18 @@ class TravelPlanItem extends StatelessWidget {
                   }
                   try {
                     // access the provider to call the delete method
-                    await Provider.of<TravelPlanProvider>(
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    final message = await Provider.of<TravelPlanProvider>(
                       context,
                       listen: false,
-                    ).deletePlan(planId);
+                    ).deletePlan(planId, currentUser!.uid);
 
                     if (context.mounted) {
                       // check if widget is still mounted before showing snackbar
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            '"${planToShowOptionsFor.name}" deleted.',
+                            '"${planToShowOptionsFor.name}": $message',
                             style: GoogleFonts.poppins(),
                           ),
                           backgroundColor: Colors.green,
