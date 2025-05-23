@@ -1,4 +1,4 @@
-# TUKLAS - Flutter Travel Buddy App
+# TUKLAS - Flutter Travel Plan App
 
 ## Introduction
 
