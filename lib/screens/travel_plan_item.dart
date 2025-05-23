@@ -8,6 +8,8 @@ import 'package:project_TUKLAS/screens/itinerary.dart';
 import 'package:project_TUKLAS/screens/shareqr_page.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/itinerary_provider.dart';
+
 class TravelPlanItem extends StatelessWidget {
   final String title;
   final String date; // expects an already formatted date string
@@ -325,11 +327,13 @@ class TravelPlanItem extends StatelessWidget {
           splashRadius: 20,
           tooltip: 'more options',
         ),
-        onTap: () {
+        onTap: () async {
+          List<String> info = await context.read<ItineraryProvider>().firebaseService.getInfo(plan.id!);
+          print("INFO IN ITINERARY: $info");
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ItineraryScreen(travelPlan: plan),
+              builder: (_) => ItineraryScreen(travelPlan: plan, information: info),
             ),
           );
         },
