@@ -149,4 +149,50 @@ class FirebasePlansApi {
       return "Unknown error occurred: $e";
     }
   }
+
+  //method to get users from sharedWith field in plan collection
+  Future<List<Map<String, dynamic>>> getSharedWith(String planId) async {
+    try {
+      // get user id from plans collection
+      final docSnapshot = await db.collection('plans').doc(planId).get();
+      if (!docSnapshot.exists) return [];
+
+      final data = docSnapshot.data();
+      if (data == null || data['sharedWith'] is! List) return [];
+
+      List<String> userIds = List<String>.from(data['sharedWith']);
+
+      // get name of users from users collection
+      List<Map<String, dynamic>> user = [];
+
+      for (String userId in userIds) {
+        final userDoc = await db.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data();
+          if (userData != null && userData['username'] != null) {
+            user.add({'id': userId, 'username': userData['username']});
+          }
+        }
+      }
+
+      return user;
+    } catch (e) {
+      print('Error fetching user names from sharedWith: $e');
+      return [];
+    }
+  }
+
+  //method to remove user in shareWith field from plan collection
+  Future<String> removeUser(String userId, String planId) async {
+    try {
+      await FirebaseFirestore.instance.collection('plans').doc(planId).update({
+        'sharedWith': FieldValue.arrayRemove([userId]),
+      });
+
+      return 'User removed successfully.';
+    } catch (e) {
+      print('Error removing user: $e');
+      return 'Failed to remove user: $e';
+    }
+  }
 }

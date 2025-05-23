@@ -98,4 +98,22 @@ class TravelPlanProvider with ChangeNotifier {
   Future<DocumentSnapshot<Map<String, dynamic>>> fetchUserData(String uid) {
     return FirebaseFirestore.instance.collection('users').doc(uid).get();
   }
+
+  // method to get users sharing this plan
+  Future<List<Map<String, dynamic>>> getSharedWith(String? planId) async {
+    List<Map<String, dynamic>> users = await firebaseService.getSharedWith(
+      planId!,
+    );
+    print(users);
+    notifyListeners();
+    return users;
+  }
+
+  //method to remove user in shareWith field from plan collection
+  Future<String> removeUser(String userId, String? planId) async {
+    String message = await firebaseService.removeUser(userId, planId!);
+    print(message);
+    notifyListeners();
+    return message;
+  }
 }
