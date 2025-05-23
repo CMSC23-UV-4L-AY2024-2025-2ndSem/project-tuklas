@@ -159,7 +159,6 @@ class _TravelBuddyScreenState extends State<TravelBuddyScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(),
                   _buildHeader(context, firstName, photoURL),
                   // Search Bar
                   TextField(
