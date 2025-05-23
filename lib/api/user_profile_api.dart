@@ -123,7 +123,6 @@ class FirebaseUserProfileApi {
     }
   }
 
-
   Future<String> updateUserProfileImage(
     String imageBase64,
     String username,
@@ -144,25 +143,37 @@ class FirebaseUserProfileApi {
   }
 
   // Create initial user profile
+  // In class FirebaseUserProfileApi
+
   Future<void> createUserProfile({
-    required String username,
+    required String
+    username, // Be cautious if this is intended to change the username set at auth sign-up
     required String firstName,
-    required String lastName, required bool isPublic, String? phoneNumber,
+    required String lastName,
+    required bool isPublic,
+    String? phoneNumber,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
-      throw Exception('No user logged in');
+      throw Exception('No user logged in for createUserProfile');
     }
 
     await _firestore.collection('users').doc(user.uid).set({
-      'username': username,
+      // 'username': username, // Only include if you intend to update username here.
+      // It's already set by FirebaseAuthAPI.signUp.
       'fname': firstName,
       'lname': lastName,
       'isPublic': isPublic,
       'phone': phoneNumber ?? '',
+      // These will re-initialize styles/interests if called.
+      // If styles/interests are set between signUp and this call, merge:true
+      // will preserve them only if these lines are removed or conditionally added.
+      // However, since FirebaseAuthAPI.signUp already initializes them,
+      // this re-initialization might be intended if this is a "reset profile" type function.
+      // For simply adding fname/lname, you might not want to touch styles/interests here.
       'styles': <String>[],
       'interests': <String>[],
-    });
+    }, SetOptions(merge: true)); // ✨ KEY CHANGE: Use merge: true
   }
 
   // Edit user styles
@@ -207,7 +218,7 @@ class FirebaseUserProfileApi {
   }
 
   // method to update user profile image base64 in Firestore
-  Future<String> updateProfileImage(String imageBase64,) async {
+  Future<String> updateProfileImage(String imageBase64) async {
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -250,6 +261,7 @@ class FirebaseUserProfileApi {
     } catch (e) {
       print('Error sending buddy request: $e');
       return 'An error occurred while sending the request.';
+
     }
   }
 
@@ -262,9 +274,19 @@ class FirebaseUserProfileApi {
       'id': user!.uid,
     };
     try {
-      if (accept){
-        await _firestore.collection('users').doc(buddyUid).collection('buddies').doc(user.uid).set(userInf);
-        await _firestore.collection('users').doc(user.uid).collection('buddies').doc(buddyUid).set(buddy);
+      if (accept) {
+        await _firestore
+            .collection('users')
+            .doc(buddyUid)
+            .collection('buddies')
+            .doc(user.uid)
+            .set(userInf);
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('buddies')
+            .doc(buddyUid)
+            .set(buddy);
       }
       await _firestore.collection('users').doc(user.uid).collection('requests').doc(buddyUid).delete();
       return "Success!";
@@ -329,6 +351,7 @@ class FirebaseUserProfileApi {
   }
 
   Future<String?> findName(String uid) async {
+
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (doc.exists) {
@@ -367,6 +390,7 @@ class FirebaseUserProfileApi {
   }
 
   Future<String?> findUsername(String uid) async {
+
     final querySnapshot = await FirebaseFirestore.instance
       .collection('users')
       .where('id', isEqualTo: uid)
