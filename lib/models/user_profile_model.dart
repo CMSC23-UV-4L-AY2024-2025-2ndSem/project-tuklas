@@ -6,6 +6,8 @@ class UserProfile {
   final List<String>? styles;
   final List<String>? interests;
   final String? imageBase64;
+  final String? phoneNumber;
+  final bool isPublic;
 
   UserProfile({
     required this.uid,
@@ -15,6 +17,8 @@ class UserProfile {
     this.styles,
     this.interests,
     this.imageBase64,
+    this.phoneNumber,
+    this.isPublic = false,
   });
 
   // Getter for full name
@@ -40,11 +44,14 @@ class UserProfile {
       firstName: firstName,
       lastName: lastName,
       styles: (json['styles'] as List?)?.whereType<String>().toList() ?? [],
-      interests:
-          (json['interests'] as List?)?.whereType<String>().toList() ?? [],
+      interests: (json['interests'] as List?)?.whereType<String>().toList() ?? [],
       imageBase64: json['imageBase64'] as String?,
+      phoneNumber: json['phoneNumber'] as String?,
+      isPublic: json['isPublic'] as bool? ?? false, 
     );
   }
+
+  get phone => null;
 
   Map<String, dynamic> toJson() {
     return {
@@ -54,6 +61,8 @@ class UserProfile {
       'styles': styles,
       'interests': interests,
       'imageBase64': imageBase64,
+      'phoneNumber': phoneNumber,   // new field
+      'isPublic': isPublic,         // new field
     };
   }
 }

@@ -57,24 +57,27 @@ class UserProfileProvider with ChangeNotifier {
       lastName: profile.lastName,
       styles: profile.styles,
       interests: profile.interests,
+      phoneNumber: profile.phone,
+      isPublic: profile.isPublic,
     );
-    print(message);
-    // Profile will be updated through the stream listener
-  }
+    print(message);  }
 
   Future<void> createInitialProfile(
     String username,
     String firstName,
     String lastName,
-  ) async {
+    {String? phone, bool isPublic = false}) async {
     await firebaseService.createUserProfile(
       username: username,
       firstName: firstName,
       lastName: lastName,
+      phoneNumber: phone,
+      isPublic: isPublic,
     );
     await loadCurrentUserProfile();
     notifyListeners();
   }
+
 
   // Fetch and store current user profile
   Future<UserProfile?> loadCurrentUserProfile() async {
@@ -137,12 +140,31 @@ class UserProfileProvider with ChangeNotifier {
   }
 
   //method to update profile image as base64 in Firestore
-  Future<void> updateProfileImage(String base64Image, String username) async {
+  Future<bool> updateProfileImage(String base64Image, String username) async {
     try {
-      await firebaseService.updateProfileImage(base64Image, username);
-      notifyListeners();
-    } catch (e) {
-      print("Error updating profile image: $e");
+      final api = FirebaseUserProfileApi();
+      final result = await api.updateUserProfileImage(base64Image, username);
+
+      // Log result for debugging
+      print('updateUserProfileImage API result: $result');
+
+      // Define success condition robustly (e.g., case-insensitive contains 'success')
+      final isSuccess = result.toLowerCase().contains('success');
+
+      if (isSuccess) {
+        await loadCurrentUserProfile(); // Reload profile data after update
+        notifyListeners();              // Notify UI of changes
+        return true;
+      } else {
+        print('Failed to update profile image: $result');
+        return false;
+      }
+    } catch (e, stacktrace) {
+      print('Exception in updateProfileImage: $e');
+      print(stacktrace);
+      return false;
     }
   }
+
+
 }
