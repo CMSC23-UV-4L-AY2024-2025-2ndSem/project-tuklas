@@ -140,10 +140,10 @@ class UserProfileProvider with ChangeNotifier {
   }
 
   //method to update profile image as base64 in Firestore
-  Future<bool> updateProfileImage(String base64Image, String username) async {
+  Future<bool> updateProfileImage(String imageBase64, String username) async {
     try {
       final api = FirebaseUserProfileApi();
-      final result = await api.updateUserProfileImage(base64Image, username);
+      final result = await api.updateUserProfileImage(imageBase64, username);
 
       // Log result for debugging
       print('updateUserProfileImage API result: $result');

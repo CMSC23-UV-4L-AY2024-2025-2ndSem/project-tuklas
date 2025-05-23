@@ -124,7 +124,7 @@ class FirebaseUserProfileApi {
 
 
   Future<String> updateUserProfileImage(
-    String base64Image,
+    String imageBase64,
     String username,
   ) async {
     try {
@@ -134,7 +134,7 @@ class FirebaseUserProfileApi {
       }
 
       await _firestore.collection('users').doc(user.uid).update({
-        'imageBase64': base64Image,
+        'imageBase64': imageBase64,
       });
       return 'Profile image updated successfully';
     } catch (e) {
@@ -206,7 +206,7 @@ class FirebaseUserProfileApi {
   }
 
   // method to update user profile image base64 in Firestore
-  Future<String> updateProfileImage(String base64Image) async {
+  Future<String> updateProfileImage(String imageBase64,) async {
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -214,7 +214,7 @@ class FirebaseUserProfileApi {
       }
 
       await _firestore.collection('users').doc(user.uid).update({
-        'imageBase64': base64Image,
+        'imageBase64': imageBase64,
       });
 
       return 'Profile image updated successfully';
