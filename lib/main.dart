@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/itinerary_provider.dart';
 import 'screens/account_setup/signup_page.dart';
+import 'screens/onboarding_screens/onboarding.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,10 +37,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tuklas',
-      initialRoute: '/signup',
+      initialRoute: '/',
       routes: {
+        '/': (context) => const OnBoardingScreen(),
         '/signup': (context) => const SignUpPage(),
-        '/': (context) => const MainScreen(),
+        '/main': (context) => const MainScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/travel-styles') {
