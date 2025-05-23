@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Tuklas',
-      initialRoute: '/',
+      initialRoute: '/signup',
       routes: {
         '/': (context) => const OnBoardingScreen(),
         '/signup': (context) => const SignUpPage(),

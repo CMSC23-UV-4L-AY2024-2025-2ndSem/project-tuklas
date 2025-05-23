@@ -192,20 +192,6 @@ class UserProfileProvider with ChangeNotifier {
     return id!;
   }
 
-  Stream<QuerySnapshot> getAllBuddies(String userId) {
-    Stream<QuerySnapshot> buddies = firebaseService.getAllBuddies(userId);
-    notifyListeners();
-    print(buddies);
-    return buddies;
-  }
-
-  Stream<QuerySnapshot> getAllRequests(String userId) {
-    Stream<QuerySnapshot> requests = firebaseService.getAllRequests(userId);
-    notifyListeners();
-    print(requests);
-    return requests;
-  }
-
   Future<void> addStyles(List<String> styles, String username) async {
     await firebaseService.addUserStyles(styles, username);
   }

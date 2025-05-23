@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/travel_plan_provider.dart';
 import '../models/travel_plan_model.dart';
 import 'user_profile.dart';
+import '../providers/itinerary_provider.dart';
+import 'itinerary.dart';
 
 class TravelPlanScreen extends StatelessWidget {
   const TravelPlanScreen({super.key});
@@ -77,7 +79,10 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingPlanCard(TravelPlan? upcomingPlan) {
+  Widget _buildUpcomingPlanCard(
+    BuildContext context,
+    TravelPlan? upcomingPlan,
+  ) {
     final String defaultImage = placeholderImageUrl;
 
     if (upcomingPlan == null) {
@@ -99,87 +104,108 @@ class TravelPlanScreen extends StatelessWidget {
 
     final String imageUrlToDisplay = upcomingPlan.imageUrl ?? defaultImage;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        height: 190,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(imageUrlToDisplay),
-            fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () async {
+        List<String> info = await context
+            .read<ItineraryProvider>()
+            .firebaseService
+            .getInfo(upcomingPlan.id!);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => ItineraryScreen(
+                  travelPlan: upcomingPlan,
+                  information: info,
+                ),
           ),
-          color: Colors.grey.shade300,
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: const [0.5, 1.0],
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          height: 190,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(imageUrlToDisplay),
+              fit: BoxFit.cover,
+            ),
+            color: Colors.grey.shade300,
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.6),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: const [0.5, 1.0],
+                    ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 16,
-              bottom: 16,
-              right: 80,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    upcomingPlan.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              Positioned(
+                left: 16,
+                bottom: 16,
+                right: 80,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      upcomingPlan.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _formatDateRange(upcomingPlan.dates),
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.95),
+                    const SizedBox(height: 5),
+                    Text(
+                      _formatDateRange(upcomingPlan.dates),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.95),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Positioned(
-              bottom: 18,
-              right: 16,
-              child: Row(
-                children:
-                    List.generate(
-                      3,
-                      (index) => Align(
-                        widthFactor: 0.65,
-                        child: CircleAvatar(
-                          radius: 17,
-                          backgroundColor: Colors.white,
+              Positioned(
+                bottom: 18,
+                right: 16,
+                child: Row(
+                  children:
+                      List.generate(
+                        3,
+                        (index) => Align(
+                          widthFactor: 0.65,
                           child: CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.grey.shade300,
-                            child: Icon(
-                              Icons.person,
-                              size: 18,
-                              color: Colors.grey.shade600,
+                            radius: 17,
+                            backgroundColor: Colors.white,
+                            child: CircleAvatar(
+                              radius: 15,
+                              backgroundColor: Colors.grey.shade300,
+                              child: Icon(
+                                Icons.person,
+                                size: 18,
+                                color: Colors.grey.shade600,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ).reversed.toList(),
+                      ).reversed.toList(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -310,7 +336,16 @@ class TravelPlanScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildUpcomingPlanCard(upcomingPlan),
+                Text(
+                  "Upcoming Travel Plan",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF14645B),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildUpcomingPlanCard(context, upcomingPlan),
                 const SizedBox(height: 28),
                 Text(
                   "All Travel Plans",

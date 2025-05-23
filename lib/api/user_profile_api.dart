@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:project_TUKLAS/models/matched_user_model.dart';
 import 'package:project_TUKLAS/models/user_profile_model.dart';
+import 'package:project_TUKLAS/screens/buddy_requests_screen.dart';
 
 class FirebaseUserProfileApi {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -142,8 +143,11 @@ class FirebaseUserProfileApi {
   }
 
   // Create initial user profile
+  // In class FirebaseUserProfileApi
+
   Future<void> createUserProfile({
-    required String username,
+    required String
+    username, // Be cautious if this is intended to change the username set at auth sign-up
     required String firstName,
     required String lastName,
     required bool isPublic,
@@ -151,18 +155,25 @@ class FirebaseUserProfileApi {
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
-      throw Exception('No user logged in');
+      throw Exception('No user logged in for createUserProfile');
     }
 
     await _firestore.collection('users').doc(user.uid).set({
-      'username': username,
+      // 'username': username, // Only include if you intend to update username here.
+      // It's already set by FirebaseAuthAPI.signUp.
       'fname': firstName,
       'lname': lastName,
       'isPublic': isPublic,
       'phone': phoneNumber ?? '',
+      // These will re-initialize styles/interests if called.
+      // If styles/interests are set between signUp and this call, merge:true
+      // will preserve them only if these lines are removed or conditionally added.
+      // However, since FirebaseAuthAPI.signUp already initializes them,
+      // this re-initialization might be intended if this is a "reset profile" type function.
+      // For simply adding fname/lname, you might not want to touch styles/interests here.
       'styles': <String>[],
       'interests': <String>[],
-    });
+    }, SetOptions(merge: true)); // ✨ KEY CHANGE: Use merge: true
   }
 
   // Edit user styles
@@ -225,53 +236,41 @@ class FirebaseUserProfileApi {
   }
 
   Future<String> sendBuddyReq(String uid, String buddyUid) async {
-    Map<String, dynamic> req = {
-      'id': uid,
-      'username': await findUsername(uid),
-      'name': await findName(uid),
-    };
-    String? msg;
     try {
-      String? buddyUser = await findId(buddyUid);
-      await FirebaseFirestore.instance
+      QuerySnapshot existingBuddy = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('buddies')
-          .where('username', isEqualTo: buddyUser)
+          .where('id', isEqualTo: buddyUid)
           .limit(1)
-          .get()
-          .then((QuerySnapshot querySnapshot) async {
-            if (querySnapshot.docs.isEmpty) {
-              await _firestore
-                  .collection('users')
-                  .doc(buddyUid)
-                  .collection('requests')
-                  .doc(uid)
-                  .set(req);
-              msg = 'Successfully sent request!';
-            } else {
-              msg = 'Already friends with user!';
-            }
-            print(msg);
-            return msg;
-          });
-    } on FirebaseException catch (e) {
-      msg = 'Error on ${e.code}: ${e.message}';
+          .get();
+
+      if (existingBuddy.docs.isNotEmpty) {
+        return 'Already friends with user!';
+      }
+
+      // Send the buddy request
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(buddyUid)
+          .collection('requests')
+          .doc(uid)
+          .set({'id': uid});
+
+      return 'Successfully sent request!';
+    } catch (e) {
+      print('Error sending buddy request: $e');
+      return 'An error occurred while sending the request.';
     }
-    return msg!;
   }
 
   Future<String> processRequest(String buddyUid, bool accept) async {
     final user = _auth.currentUser;
     final buddy = {
       'id': buddyUid,
-      'username': await findUsername(buddyUid),
-      'name': await findName(buddyUid),
     };
     final userInf = {
       'id': user!.uid,
-      'username': await findUsername(user.uid),
-      'name': await findName(user.uid),
     };
     try {
       if (accept) {
@@ -288,57 +287,86 @@ class FirebaseUserProfileApi {
             .doc(buddyUid)
             .set(buddy);
       }
-      await _firestore
-          .collection('users')
-          .doc(user!.uid)
-          .collection('requests')
-          .doc(buddyUid)
-          .delete();
-      print(userInf["username"]);
-      print(userInf["name"]);
-      print(buddy["username"]);
-      print(buddy["name"]);
+      await _firestore.collection('users').doc(user.uid).collection('requests').doc(buddyUid).delete();
       return "Success!";
     } on FirebaseException catch (e) {
       return "Error on ${e.code}: ${e.message}";
     }
   }
 
-  Stream<QuerySnapshot> getAllBuddies(uid) {
-    return _firestore
+  Future<List<UserRequest>> getBuddyRequests(String currentUserId) async {
+    final requestSnapshot = await _firestore
         .collection('users')
-        .doc(uid)
-        .collection('buddies')
-        .snapshots();
+        .doc(currentUserId)
+        .collection('requests')
+        .get();
+
+    List<UserRequest> requests = [];
+
+    for (var requestDoc in requestSnapshot.docs) {
+      final senderId = requestDoc.data()['id'];
+
+      final userDoc = await _firestore.collection('users').doc(senderId).get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        requests.add(UserRequest(
+          id: senderId,
+          name: data['name'] ?? 'Unknown',
+          username: data['username'] ?? '',
+          avatarUrl: data['avatarUrl'],
+        ));
+      }
+    }
+    return requests;
   }
 
-  Stream<QuerySnapshot> getAllRequests(uid) {
-    return _firestore
+  Future<List<UserRequest>> getTravelBuddies(String currentUserId) async {
+    final buddiesSnapshot = await _firestore
         .collection('users')
-        .doc(uid)
-        .collection('requests')
-        .snapshots();
+        .doc(currentUserId)
+        .collection('buddies')
+        .get();
+
+    List<UserRequest> buddies = [];
+
+    for (var buddyDoc in buddiesSnapshot.docs) {
+      final buddyId = buddyDoc.id;
+
+      final userDoc = await _firestore.collection('users').doc(buddyId).get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        buddies.add(UserRequest(
+          id: buddyId,
+          name: data['name'] ?? 'Unknown',
+          username: data['username'] ?? '',
+          avatarUrl: data['avatarUrl'],
+        ));
+      }
+    }
+
+    return buddies;
   }
 
   Future<String?> findName(String uid) async {
-    String? name;
-    await FirebaseFirestore
-        .instance // snapshot of db with usernames similar to username
-        .collection('users')
-        .where('id', isEqualTo: uid)
-        .limit(1)
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-          if (querySnapshot.docs.isEmpty) {
-            name = null;
-          } else {
-            name =
-                querySnapshot.docs[0]['fname'] +
-                " " +
-                querySnapshot.docs[0]['lname'];
-          }
-        });
-    return name;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (doc.exists) {
+        final data = doc.data();
+        final fname = data?['fname'] as String?;
+        final lname = data?['lname'] as String?;
+        if (fname != null && lname != null) {
+          return '$fname $lname';
+        }
+      } else {
+        print('User document does not exist.');
+      }
+      return null;
+    } catch (e) {
+      print('Error retrieving name: $e');
+      return null;
+    }
   }
 
   Future<String?> findId(String username) async {
@@ -360,21 +388,16 @@ class FirebaseUserProfileApi {
   }
 
   Future<String?> findUsername(String uid) async {
-    String? username;
-    await FirebaseFirestore
-        .instance // snapshot of db with usernames similar to username
-        .collection('users')
-        .where('id', isEqualTo: uid)
-        .limit(1)
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-          if (querySnapshot.docs.isEmpty) {
-            username = null;
-          } else {
-            username = querySnapshot.docs[0]['username'];
-          }
-        });
-    return username;
+    final querySnapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .where('id', isEqualTo: uid)
+      .limit(1)
+      .get();
+
+    if (querySnapshot.docs.isEmpty) return null;
+
+    return querySnapshot.docs[0]['username'];
+
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getUser(String userId) {
