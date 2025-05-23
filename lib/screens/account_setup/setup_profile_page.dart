@@ -208,14 +208,11 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
         if (_formKey.currentState!.validate()) {
           _formKey.currentState!.save();
 
-          // create initial user profile
-          String fullName =
-              "${formValues.textfieldValues['fName']} ${formValues.textfieldValues['lName']!}";
-
           // add username and full name
           await context.read<UserProfileProvider>().createInitialProfile(
             formValues.textfieldValues['uName']!,
-            fullName,
+            formValues.textfieldValues['fName']!,
+            formValues.textfieldValues['lName']!,
           );
 
           // upload image to Firebase Storage

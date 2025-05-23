@@ -179,4 +179,25 @@ class FirebaseUserProfileApi {
       rethrow;
     }
   }
+
+  // method to update user profile image base64 in Firestore
+  Future<void> updateProfileImage(String base64Image, String username) async {
+    try {
+      final userQuery =
+          await _firestore
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .limit(1)
+              .get();
+
+      if (userQuery.docs.isNotEmpty) {
+        await userQuery.docs.first.reference.update({
+          'profileImage': base64Image,
+        });
+      }
+    } catch (e) {
+      print('Error updating profile image: $e');
+      rethrow;
+    }
+  }
 }

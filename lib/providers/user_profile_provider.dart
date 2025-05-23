@@ -135,4 +135,14 @@ class UserProfileProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  //method to update profile image as base64 in Firestore
+  Future<void> updateProfileImage(String base64Image, String username) async {
+    try {
+      await firebaseService.updateProfileImage(base64Image, username);
+      notifyListeners();
+    } catch (e) {
+      print("Error updating profile image: $e");
+    }
+  }
 }
