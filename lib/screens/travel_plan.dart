@@ -99,7 +99,7 @@ class TravelPlanScreen extends StatelessWidget {
   // main widget that constructs the screen's content based on data
   Widget _buildContent(
     BuildContext context,
-    String firstName,
+    String fullName,
     String? photoURL,
     List<TravelPlan> allPlans, // list of processed travel plan objects
   ) {
@@ -128,9 +128,6 @@ class TravelPlanScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // non-scrollable header part
-        _GreetingHeader(firstName: firstName, photoURL: photoURL),
-        // scrollable part
         // fixed header section
         Padding(
           // add padding around the fixed section
@@ -159,7 +156,7 @@ class TravelPlanScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          firstName, // Ensure firstName is defined in your code
+                          fullName,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -178,7 +175,7 @@ class TravelPlanScreen extends StatelessWidget {
                           builder:
                               (context) => UserProfilePage(
                                 username: 'your_username_here',
-                              ), // Pass the username or any identifier
+                              ),
                         ),
                       );
                     },
@@ -333,16 +330,19 @@ class TravelPlanScreen extends StatelessWidget {
 
                 // ---- data processing stage ----
                 String firstName = 'User'; // default name
+                String lastName = ''; // default last name
                 String? photoURL =
                     currentUser.photoURL; // get photo from auth user data
 
-                // if user document exists in firestore, get first name
+                // if user document exists in firestore, get first and last name
                 if (userSnapshot.hasData && userSnapshot.data!.exists) {
                   final userData =
                       userSnapshot.data!.data(); // firestore data map
                   firstName =
                       userData?['fname'] as String? ??
                       'User'; // safely get 'fname'
+                  lastName =
+                      userData?['lname'] as String? ?? ''; // safely get 'lname'
                   // photoURL = userData?['photoURL'] as String? ?? photoURL; // optionally get photo from firestore too
                 } else {
                   // log if user document wasn't found but proceed with defaults
@@ -385,93 +385,16 @@ class TravelPlanScreen extends StatelessWidget {
                 }
 
                 // all data (user info, plans) is ready, build the main content ui
-                return _buildContent(context, firstName, photoURL, allPlans);
+                return _buildContent(
+                  context,
+                  '$firstName $lastName',
+                  photoURL,
+                  allPlans,
+                );
               },
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-// --- widget for the fixed header (greeting and search) ---
-class _GreetingHeader extends StatelessWidget {
-  final String firstName;
-  final String? photoURL;
-
-  const _GreetingHeader({required this.firstName, this.photoURL});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18.0, 15.0, 18.0, 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // user greeting and avatar
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Good morning,",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: const Color.fromARGB(255, 0, 0, 0),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      firstName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF14645B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey,
-                backgroundImage:
-                    (photoURL != null && photoURL!.isNotEmpty)
-                        ? NetworkImage(photoURL!)
-                        : null,
-                child:
-                    (photoURL == null || photoURL!.isEmpty)
-                        ? const Icon(Icons.person, color: Colors.white)
-                        : null,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // search input field
-          TextField(
-            style: GoogleFonts.poppins(),
-            decoration: InputDecoration(
-              hintText: 'Search',
-              hintStyle: GoogleFonts.poppins(),
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(color: Colors.grey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(color: Colors.grey),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 0,
-                horizontal: 20,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

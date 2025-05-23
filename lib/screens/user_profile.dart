@@ -18,12 +18,13 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
   File? imageFile;
   Uint8List? pickedFileBytes;
   List<String> selectedStyles = [];
   List<String> selectedInterests = [];
+  bool _isLoading = true;
 
   final List<String> travelStyles = [
     'Adventure Travel',
@@ -59,10 +60,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserProfile();
+    });
   }
 
   Future<void> _loadUserProfile() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       final profile =
           await context.read<UserProfileProvider>().fetchUserProfileOnce();
@@ -70,16 +79,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
       if (!mounted) return;
 
       setState(() {
-        nameController.text = profile.name;
-        usernameController.text = profile.username;
+        firstNameController.text = profile.firstName;
+        lastNameController.text = profile.lastName;
         selectedStyles = List<String>.from(profile.styles ?? []);
         selectedInterests = List<String>.from(profile.interests ?? []);
         if (profile.imageBase64 != null && profile.imageBase64!.isNotEmpty) {
           pickedFileBytes = base64Decode(profile.imageBase64!);
         }
+        _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to load profile: $e')));
@@ -88,19 +101,24 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      final newUsername = usernameController.text.trim();
-      final newName = nameController.text.trim();
+      final firstName = firstNameController.text.trim();
+      final lastName = lastNameController.text.trim();
       final base64Image =
           pickedFileBytes != null ? base64Encode(pickedFileBytes!) : null;
 
       try {
+        // Get current profile to maintain username
+        final currentProfile =
+            await context.read<UserProfileProvider>().fetchUserProfileOnce();
+
         // update the profile with the new data
         await context
             .read<UserProfileProvider>()
             .firebaseService
             .updateUserProfile(
-              username: newUsername,
-              name: newName,
+              username: currentProfile.username, // Keep existing username
+              firstName: firstName,
+              lastName: lastName,
               styles: selectedStyles,
               interests: selectedInterests,
             );
@@ -214,6 +232,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }) {
     return TextFormField(
       controller: controller,
+      enabled: !_isLoading,
       decoration: InputDecoration(
         enabledBorder: OutlineInputBorder(
           borderSide: const BorderSide(color: Color(0xFF027572)),
@@ -228,7 +247,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           fontSize: 16,
           color: const Color(0x80027572),
         ),
-        hintText: hint,
+        hintText: _isLoading ? 'Loading...' : hint,
         hintStyle: GoogleFonts.poppins(
           fontSize: 16,
           color: const Color.fromARGB(128, 62, 82, 81),
@@ -280,103 +299,115 @@ class _UserProfilePageState extends State<UserProfilePage> {
         preferredSize: const Size.fromHeight(60),
         child: _buildTopBar(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(30),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildAvatar(),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: nameController,
-                label: 'Name',
-                hint: 'Enter your name',
-              ),
-              const SizedBox(height: 10),
-              _buildTextField(
-                controller: usernameController,
-                label: 'Username',
-                hint: 'Enter your username',
-              ),
-              const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Travel Styles',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: const Color(0xFF027572),
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFF027572)),
+              )
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(30),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildAvatar(),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: firstNameController,
+                        label: 'First Name',
+                        hint: 'Enter your first name',
+                      ),
+                      const SizedBox(height: 10),
+                      _buildTextField(
+                        controller: lastNameController,
+                        label: 'Last Name',
+                        hint: 'Enter your last name',
+                      ),
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Travel Styles',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: const Color(0xFF027572),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildSelectableChips(
+                        options: travelStyles,
+                        selectedOptions: selectedStyles,
+                        onSelected: (style) {
+                          setState(() {
+                            if (selectedStyles.contains(style)) {
+                              selectedStyles.remove(style);
+                            } else {
+                              selectedStyles.add(style);
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Travel Interests',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: const Color(0xFF027572),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildSelectableChips(
+                        options: travelInterests,
+                        selectedOptions: selectedInterests,
+                        onSelected: (interest) {
+                          setState(() {
+                            if (selectedInterests.contains(interest)) {
+                              selectedInterests.remove(interest);
+                            } else {
+                              selectedInterests.add(interest);
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: _saveProfile,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 80,
+                            vertical: 15,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          backgroundColor: const Color(0xFF027572),
+                        ),
+                        child: Text(
+                          'Save Profile',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              _buildSelectableChips(
-                options: travelStyles,
-                selectedOptions: selectedStyles,
-                onSelected: (style) {
-                  setState(() {
-                    if (selectedStyles.contains(style)) {
-                      selectedStyles.remove(style);
-                    } else {
-                      selectedStyles.add(style);
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Travel Interests',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: const Color(0xFF027572),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              _buildSelectableChips(
-                options: travelInterests,
-                selectedOptions: selectedInterests,
-                onSelected: (interest) {
-                  setState(() {
-                    if (selectedInterests.contains(interest)) {
-                      selectedInterests.remove(interest);
-                    } else {
-                      selectedInterests.add(interest);
-                    }
-                  });
-                },
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 80,
-                    vertical: 15,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  backgroundColor: const Color(0xFF027572),
-                ),
-                child: Text(
-                  'Save Profile',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
+  }
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    super.dispose();
   }
 }

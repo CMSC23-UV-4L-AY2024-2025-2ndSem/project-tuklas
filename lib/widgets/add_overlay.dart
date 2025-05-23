@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:project_TUKLAS/screens/addplan_page.dart';
+import 'package:project_TUKLAS/screens/addbuddy_page.dart';
 
 typedef ActionCallback = void Function();
 
@@ -10,8 +11,14 @@ class AddOverlay extends StatelessWidget {
 
   const AddOverlay({super.key, required this.onClose});
 
-  void _onAddTravelBuddy() {
-    // navigate here if context is passed
+  void _onAddTravelBuddy(BuildContext context) {
+    // Close the overlay
+    onClose();
+    // Navigate to AddBuddyPage
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddBuddyPage()),
+    );
   }
 
   @override
@@ -77,7 +84,7 @@ class AddOverlay extends StatelessWidget {
                     ),
                     GestureDetector(
                       // travel buddy button
-                      onTap: _onAddTravelBuddy,
+                      onTap: () => _onAddTravelBuddy(context),
                       child: Container(
                         width: 130,
                         padding: const EdgeInsets.symmetric(vertical: 7),
