@@ -58,6 +58,15 @@ class FirebaseUserProfileApi {
     });
   }
 
+  Future<void> updateProfileName(String username, String newName) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('User not logged in');
+
+    final userDoc = db.collection('users').doc(uid);
+
+    await userDoc.update({'name': newName});
+  }
+
   Future<UserProfile> getUserProfileOnce() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) throw Exception('User not logged in');
@@ -89,5 +98,15 @@ class FirebaseUserProfileApi {
         .collection('users')
         .doc(user.uid);
     await userDoc.update({'interests': interests});
+  }
+
+  Future<void> updateProfileImage(String base64Image, String username) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+    await userDoc.update({'imageBase64': base64Image});
   }
 }

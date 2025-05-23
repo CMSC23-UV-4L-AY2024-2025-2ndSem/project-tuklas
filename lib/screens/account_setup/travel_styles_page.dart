@@ -5,14 +5,10 @@ import '../../providers/user_profile_provider.dart';
 import '../account_setup/travel_interests_page.dart';
 
 // This page allows user to choose their preferred travel style (skippable)
-// when submit is clicked it navigates to travel interest page
+// After, it navigates to travel interest page
 class TravelStylesPage extends StatefulWidget {
-  final String? email, password;
-  const TravelStylesPage({
-    super.key,
-    required this.email,
-    required this.password,
-  });
+  final String? username;
+  const TravelStylesPage({super.key, required this.username});
 
   @override
   State<TravelStylesPage> createState() => _TravelStylesState();
@@ -138,15 +134,17 @@ class _TravelStylesState extends State<TravelStylesPage> {
   // navigate to next page
   Widget get submitButton => ElevatedButton(
     onPressed: () async {
+      // Update the user's travel styles in the provider
+      await context.read<UserProfileProvider>().updateStyles(
+        selectedStyles,
+        widget.username!,
+      );
+
+      // Navigate to the next page
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder:
-              (context) => InterestsPage(
-                email: widget.email!,
-                travelStyles: selectedStyles,
-                password: widget.password!,
-              ), // pass email and selected travel styles to next page
+          builder: (context) => InterestsPage(username: widget.username!),
         ),
       );
     },
