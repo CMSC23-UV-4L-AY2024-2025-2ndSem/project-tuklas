@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:project_TUKLAS/providers/user_profile_provider.dart';
@@ -56,6 +57,7 @@ class _AddBuddyPageState extends State<AddBuddyPage> {
 
   @override
   Widget build(BuildContext context) {
+    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -231,7 +233,10 @@ class _AddBuddyPageState extends State<AddBuddyPage> {
                                       elevation: 0,
                                       minimumSize: const Size(0, 32),
                                     ),
-                                    onPressed: () {
+                                    onPressed: () async {
+
+                                      await context.read<UserProfileProvider>().sendBuddyReq(currentUserId, user.username);
+
                                       print('Add buddy: ${user.username}');
                                       // implement add buddy functionality here
                                     },
