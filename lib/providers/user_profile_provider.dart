@@ -146,8 +146,8 @@ class UserProfileProvider with ChangeNotifier {
     }
   }
 
-  Future<String> sendBuddyReq(String uid, String buddyUser) async {
-    String msg = await firebaseService.sendBuddyReq(uid, buddyUser);
+  Future<String> sendBuddyReq(String uid, String buddyUid) async {
+    String msg = await firebaseService.sendBuddyReq(uid, buddyUid);
     notifyListeners();
     return msg;
   }
