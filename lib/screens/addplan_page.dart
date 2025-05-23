@@ -8,6 +8,8 @@ import 'package:project_TUKLAS/screens/map_search_page.dart';
 import 'package:project_TUKLAS/screens/scanqr_page.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/itinerary_provider.dart';
+
 //this page allows the user to add a new travel plan
 //input fields includes: name of the trip,
 //location (with auto suggest feature), date (start and end), and add travel buddy
@@ -36,6 +38,21 @@ class _AddtravelPageState extends State<AddtravelPage> {
     _endDateController.clear();
     lat = null;
     long = null;
+  }
+
+  List<DateTime> _generateDateRange(List<Timestamp> timestamps) {
+    if (timestamps.isEmpty) return [];
+    timestamps.sort((a, b) => a.toDate().compareTo(b.toDate()));
+    DateTime start = timestamps.first.toDate();
+    DateTime end = timestamps.last.toDate();
+
+    List<DateTime> dates = [];
+    DateTime current = start;
+    while (!current.isAfter(end)) {
+      dates.add(current);
+      current = current.add(Duration(days: 1));
+    }
+    return dates;
   }
 
   // method to add a date using datepicker
@@ -407,8 +424,8 @@ class _AddtravelPageState extends State<AddtravelPage> {
 
         try {
           // use the provider to add the plan
-          await context.read<TravelPlanProvider>().addPlan(newPlan);
-
+          String id = await context.read<TravelPlanProvider>().addPlan(newPlan);
+          await context.read<ItineraryProvider>().createItineraries(_generateDateRange(newPlan.dates), id);
           // display success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
