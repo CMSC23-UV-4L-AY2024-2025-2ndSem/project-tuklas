@@ -235,7 +235,7 @@ class _AddBuddyPageState extends State<AddBuddyPage> {
                                     ),
                                     onPressed: () async {
 
-                                      await context.read<UserProfileProvider>().sendBuddyReq(currentUserId, user.username);
+                                      await context.read<UserProfileProvider>().sendBuddyReq(currentUserId, user.uid);
 
                                       print('Add buddy: ${user.username}');
                                       // implement add buddy functionality here
