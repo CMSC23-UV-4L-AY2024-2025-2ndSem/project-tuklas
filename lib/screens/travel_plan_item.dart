@@ -328,12 +328,16 @@ class TravelPlanItem extends StatelessWidget {
           tooltip: 'more options',
         ),
         onTap: () async {
-          List<String> info = await context.read<ItineraryProvider>().firebaseService.getInfo(plan.id!);
+          List<String> info = await context
+              .read<ItineraryProvider>()
+              .firebaseService
+              .getInfo(plan.id!);
           print("INFO IN ITINERARY: $info");
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ItineraryScreen(travelPlan: plan, information: info),
+              builder:
+                  (_) => ItineraryScreen(travelPlan: plan, information: info),
             ),
           );
         },
