@@ -236,7 +236,7 @@ class FirebaseUserProfileApi {
       .get()
       .then((QuerySnapshot querySnapshot) async {
         if (querySnapshot.docs.isEmpty) {
-          await _firestore.collection('users').doc(uid).collection('requests').doc(buddyUid).set(req);
+          await _firestore.collection('users').doc(buddyUid).collection('requests').doc(buddyUid).set(req);
           msg = 'Successfully sent request!';
         } else {
           msg = 'Already friends with user!';
@@ -264,8 +264,12 @@ class FirebaseUserProfileApi {
     }
   }
 
-  Stream<QuerySnapshot> getAllFriends(uid) {
-    return _firestore.collection('users').doc(uid).collection('friends').snapshots();
+  Stream<QuerySnapshot> getAllBuddies(uid) {
+    return _firestore.collection('users').doc(uid).collection('buddies').snapshots();
+  }
+
+   Stream<QuerySnapshot> getAllRequests(uid) {
+    return _firestore.collection('users').doc(uid).collection('requests').snapshots();
   }
 
   Future<String?> findName(String username) async {
