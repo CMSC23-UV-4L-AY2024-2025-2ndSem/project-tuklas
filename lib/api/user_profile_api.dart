@@ -1,112 +1,182 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:project_TUKLAS/models/matched_user_model.dart';
 import 'package:project_TUKLAS/models/user_profile_model.dart';
 
 class FirebaseUserProfileApi {
-  final FirebaseFirestore db = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get the current user's profile stream
-  Stream<DocumentSnapshot> getUserProfileStream() {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) throw Exception('User not logged in');
-
-    return db.collection('users').doc(uid).snapshots();
+  // Get user profile stream
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getUserProfileStream() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      return Stream.value(
+        _firestore.doc('users/__nouser__').snapshots().first
+            as DocumentSnapshot<Map<String, dynamic>>,
+      );
+    }
+    return _firestore.collection('users').doc(user.uid).snapshots();
   }
 
-  // Update the user's profile
+  // Get user profile once
+  Future<UserProfile> getUserProfileOnce() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user logged in');
+    }
+
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+    if (!doc.exists) {
+      throw Exception('User profile not found');
+    }
+
+    return UserProfile.fromJson(doc.data()!, user.uid);
+  }
+
+  // Get all other users (excluding current user)
+  Future<List<UserProfile>> getAllOtherUsers() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      throw Exception('No user logged in');
+    }
+
+    final querySnapshot =
+        await _firestore
+            .collection('users')
+            .where(FieldPath.documentId, isNotEqualTo: currentUser.uid)
+            .get();
+
+    return querySnapshot.docs
+        .map((doc) => UserProfile.fromJson(doc.data(), doc.id))
+        .toList();
+  }
+
+  // Find similar users based on interests and styles
+  List<MatchedUser> findSimilarUsersAlgorithm(
+    UserProfile currentUser,
+    List<UserProfile> allUsers,
+  ) {
+    final List<MatchedUser> matchedUsers = [];
+
+    for (final user in allUsers) {
+      int matchCount = 0;
+
+      // Compare interests
+      if (currentUser.interests != null && user.interests != null) {
+        for (final interest in currentUser.interests!) {
+          if (user.interests!.contains(interest)) {
+            matchCount++;
+          }
+        }
+      }
+
+      // Compare styles
+      if (currentUser.styles != null && user.styles != null) {
+        for (final style in currentUser.styles!) {
+          if (user.styles!.contains(style)) {
+            matchCount++;
+          }
+        }
+      }
+
+      // Only add users with at least one match
+      if (matchCount > 0) {
+        matchedUsers.add(MatchedUser(user: user, matchCount: matchCount));
+      }
+    }
+
+    // Sort by match count in descending order
+    matchedUsers.sort((a, b) => b.matchCount.compareTo(a.matchCount));
+    return matchedUsers;
+  }
+
+  // Update user profile
   Future<String> updateUserProfile({
     required String username,
-    required String name,
+    required String firstName,
+    required String lastName,
     List<String>? styles,
     List<String>? interests,
   }) async {
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) return 'User not logged in';
+      final user = _auth.currentUser;
+      if (user == null) {
+        return 'No user logged in';
+      }
 
-      final docRef = db.collection('users').doc(uid);
-
-      await docRef.update({
+      await _firestore.collection('users').doc(user.uid).update({
         'username': username,
-        'name': name,
-        'styles': styles ?? [],
-        'interests': interests ?? [],
+        'fname': firstName,
+        'lname': lastName,
+        if (styles != null) 'styles': styles,
+        if (interests != null) 'interests': interests,
       });
 
-      return 'Profile updated successfully!';
-    } on FirebaseException catch (e) {
-      return 'Error on ${e.code}: ${e.message}';
+      return 'Profile updated successfully';
+    } catch (e) {
+      return 'Error updating profile: $e';
     }
   }
 
-  // Create a new user profile (if needed)
+  // Create initial user profile
   Future<void> createUserProfile({
     required String username,
-    required String name,
+    required String firstName,
+    required String lastName,
   }) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) throw Exception('User not logged in');
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user logged in');
+    }
 
-    final userDoc = db.collection('users').doc(uid);
-
-    await userDoc.set({
+    await _firestore.collection('users').doc(user.uid).set({
       'username': username,
-      'name': name,
-      'styles': [],
-      'interests': [],
-      'imageBase64': null,
+      'fname': firstName,
+      'lname': lastName,
+      'styles': <String>[],
+      'interests': <String>[],
     });
   }
 
-  Future<void> updateProfileName(String username, String newName) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) throw Exception('User not logged in');
-
-    final userDoc = db.collection('users').doc(uid);
-
-    await userDoc.update({'name': newName});
-  }
-
-  Future<UserProfile> getUserProfileOnce() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) throw Exception('User not logged in');
-
-    final doc = await db.collection('users').doc(uid).get();
-    if (!doc.exists) throw Exception('User profile not found');
-
-    return UserProfile.fromJson(doc.data()!);
-  }
-
+  // Edit user styles
   Future<void> editUserStyles(List<String> styles, String username) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('No user logged in');
+    try {
+      final userQuery =
+          await _firestore
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .limit(1)
+              .get();
 
-    final userDoc = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid);
-    await userDoc.update({'styles': styles});
+      if (userQuery.docs.isNotEmpty) {
+        await userQuery.docs.first.reference.update({'styles': styles});
+      }
+    } catch (e) {
+      print('Error updating styles: $e');
+      rethrow;
+    }
   }
 
+  // Edit user interests
   Future<void> editUserInterests(
     List<String> interests,
     String username,
   ) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('No user logged in');
+    try {
+      final userQuery =
+          await _firestore
+              .collection('users')
+              .where('username', isEqualTo: username)
+              .limit(1)
+              .get();
 
-    final userDoc = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid);
-    await userDoc.update({'interests': interests});
-  }
-
-  Future<void> updateProfileImage(String base64Image, String username) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('No user logged in');
-
-    final userDoc = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid);
-    await userDoc.update({'imageBase64': base64Image});
+      if (userQuery.docs.isNotEmpty) {
+        await userQuery.docs.first.reference.update({'interests': interests});
+      }
+    } catch (e) {
+      print('Error updating interests: $e');
+      rethrow;
+    }
   }
 }
