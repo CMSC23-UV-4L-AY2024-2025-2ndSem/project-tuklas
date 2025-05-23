@@ -246,6 +246,7 @@ class FirebaseUserProfileApi {
         print (msg);
         return msg;
       });
+
     } on FirebaseException catch (e) {
       msg = 'Error on ${e.code}: ${e.message}';
     }
@@ -281,11 +282,19 @@ class FirebaseUserProfileApi {
   }
 
   Stream<QuerySnapshot> getAllBuddies(uid) {
-    return _firestore.collection('users').doc(uid).collection('buddies').snapshots();
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('buddies')
+        .snapshots();
   }
 
-   Stream<QuerySnapshot> getAllRequests(uid) {
-    return _firestore.collection('users').doc(uid).collection('requests').snapshots();
+  Stream<QuerySnapshot> getAllRequests(uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('requests')
+        .snapshots();
   }
 
   Future<String?> findName(String uid) async {
@@ -309,18 +318,18 @@ class FirebaseUserProfileApi {
   Future<String?> findId(String username) async {
     String? id;
     await FirebaseFirestore
-      .instance // snapshot of db with usernames similar to username
-      .collection('users')
-      .where('username', isEqualTo: username)
-      .limit(1)
-      .get()
-      .then((QuerySnapshot querySnapshot) {
-        if (querySnapshot.docs.isEmpty) {
-          id = null;
-        } else {
-          id = querySnapshot.docs[0]['id'];
-        }
-      });
+        .instance // snapshot of db with usernames similar to username
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+          if (querySnapshot.docs.isEmpty) {
+            id = null;
+          } else {
+            id = querySnapshot.docs[0]['id'];
+          }
+        });
     return id;
   }
 
