@@ -145,4 +145,28 @@ class UserProfileProvider with ChangeNotifier {
       print("Error updating profile image: $e");
     }
   }
+
+  Future<String> sendBuddyReq(String uid, String buddyUser) async {
+    String msg = await firebaseService.sendBuddyReq(uid, buddyUser);
+    notifyListeners();
+    return msg;
+  }
+
+  Future<String> processRequest(String buddyUid, bool accept) async {
+    String msg = await firebaseService.processRequest(buddyUid, accept);
+    notifyListeners();
+    return msg;
+  }
+
+  Future<String?> findName(String username) async {
+    String? name = await firebaseService.findName(username);
+    notifyListeners();
+    return name!;
+  }
+
+  Future<String?> findId(String username) async {
+    String? id = await firebaseService.findId(username);
+    notifyListeners();
+    return id!;
+  }
 }
