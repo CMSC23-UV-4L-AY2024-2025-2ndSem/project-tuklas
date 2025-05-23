@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:project_TUKLAS/providers/travel_plan_provider.dart';
 import 'package:project_TUKLAS/screens/map_search_page.dart';
 import 'package:provider/provider.dart';
+import '../models/itinerary_model.dart';
 import '../models/travel_plan_model.dart';
+import '../providers/itinerary_provider.dart';
+import 'addlocation_page.dart';
 
 class ItineraryScreen extends StatefulWidget {
   final TravelPlan travelPlan;
+  final List<String> information;
 
-  const ItineraryScreen({super.key, required this.travelPlan});
-
+  const ItineraryScreen({super.key, required this.travelPlan, required this.information});
+  
   @override
-  _ItineraryScreenState createState() => _ItineraryScreenState();
+  State<ItineraryScreen> createState() => _ItineraryScreenState();
 }
 
 class _ItineraryScreenState extends State<ItineraryScreen> {
@@ -36,19 +40,38 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
     return 'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
   }
 
+  int getDayIndex(DateTime day, List<DateTime> dateRange) {
+    for (int i = 0; i < dateRange.length; i++) {
+      if (_isSameDate(dateRange[i], day)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Map<int, TextEditingController> locationControllers = {};
+  Map<int, TextEditingController> _notesControllers = {};
+  double? lat, long; 
+
   @override
   Widget build(BuildContext context) {
     final dateRange = _generateDateRange(widget.travelPlan.dates);
+    List<String> information = widget.information;
+    List<GlobalKey<FormState>> formKeyList = [];
 
     return Scaffold(
       body: Column(
         children: [
-          // Header Section
           Container(
+            height: 200,
             color: const Color.fromARGB(255, 235, 76, 3),
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 IconButton(
                   icon: Icon(Icons.arrow_back, color: Colors.white),
@@ -57,281 +80,222 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          widget.travelPlan.name,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                widget.travelPlan.name,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                              Text(
+                                _formatLocation(widget.travelPlan.location),
+                                style: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
+                              ),
+                              if (dateRange.isNotEmpty)
+                                Text(
+                                  '${DateFormat.yMMMd().format(dateRange.first)} - ${DateFormat.yMMMd().format(dateRange.last)}',
+                                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
+                                ),
+                            ],
                           ),
                         ),
-                        Text(
-                          _formatLocation(widget.travelPlan.location),
-                          style: TextStyle(fontSize: 14, color: Colors.white),
-                        ),
-                        if (dateRange.isNotEmpty)
-                          Text(
-                            '${DateFormat.yMMMd().format(dateRange.first)} - ${DateFormat.yMMMd().format(dateRange.last)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white70,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(255, 5, 113, 112),
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              child: Text("Share", style: GoogleFonts.poppins()),
                             ),
-                          ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: Icon(Icons.more_vert, color: Colors.white),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 5, 113, 112),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: Text("Share"),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        _showEditModal(context, widget.travelPlan);
-                      },
-                      icon: Icon(Icons.edit, color: Colors.white),
-                    ),
-                  ],
                 ),
               ],
             ),
           ),
           // Itinerary Section
           Expanded(
-            child:
-                dateRange.isEmpty
-                    ? Center(child: Text("No dates available for this trip."))
-                    : SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children:
-                            dateRange.map((date) {
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 16),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        DateFormat.yMMMMEEEEd().format(date),
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      SizedBox(height: 8),
-                                      ElevatedButton(
-                                        onPressed: () {},
-                                        child: Text("Add Location"),
-                                      ),
-                                      SizedBox(height: 8),
-                                      TextField(
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(),
-                                          hintText: 'Add notes here',
-                                        ),
-                                        maxLines: 3,
-                                      ),
-                                      SizedBox(height: 8),
-                                      Column(
-                                        children: List.generate(4, (index) {
-                                          return CheckboxListTile(
-                                            value: false,
-                                            onChanged: (_) {},
-                                            title: Text(
-                                              'Checklist item ${index + 1}',
-                                            ),
-                                          );
-                                        }),
-                                      ),
-                                    ],
-                                  ),
+            child: dateRange.isEmpty
+                ? Center(child: Text("No dates available for this trip.", style: GoogleFonts.poppins()))
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: dateRange.map((date) {
+                        Itinerary itinerary = Itinerary();
+                        final formKey = GlobalKey<FormState>();
+                        formKeyList.add(formKey);
+                        int day = getDayIndex(date, dateRange);
+                        if (!_notesControllers.containsKey(day)) {
+                          _notesControllers[day] = TextEditingController(
+                            text: information[(day * 2)].isEmpty ? '' : information[(day * 2)],
+                          );
+                        }
+                        TextEditingController notesController = _notesControllers[day]!;
+
+                        if (!locationControllers.containsKey(day)) {
+                          locationControllers[day] = TextEditingController(
+                            text: information[1 + (day * 2)].isEmpty ? '' : information[1 + (day * 2)],
+                          );
+                        }
+                        TextEditingController locationController = locationControllers[day]!;
+                        
+                        return Form(
+                          key: formKeyList[day],
+                          child: Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  DateFormat.yMMMMEEEEd().format(date),
+                                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16)
                                 ),
-                              );
-                            }).toList(),
-                      ),
+                                SizedBox(height: 8),
+                                GestureDetector(
+                                  onTap: () async {
+                                    print("Navigating to MapSearchPage...");
+                                    // navigate to the new MapSearchPage and wait for a result
+                                    final result = await Navigator.push<Map<String, dynamic>>(
+                                      // Expect a Map result
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const MapSearchPage()),
+                                    );
+
+                                    // handles the returned result
+                                    if (result != null && mounted) {
+                                      print("Received location result: $result");
+                                      // ensures the result contains the expected keys and types
+                                      if (result.containsKey('name') &&
+                                          result.containsKey('latitude') &&
+                                          result.containsKey('longitude') &&
+                                          result['name'] is String &&
+                                          result['latitude'] is double &&
+                                          result['longitude'] is double) {
+                                        setState(() {
+                                          locationController.text = result['name'] as String;
+                                          lat = result['latitude'] as double?; // use nullable assignment
+                                          long = result['longitude'] as double?; // use nullable assignment
+                                          widget.travelPlan.location = GeoPoint(result['latitude'], result['longitude']);
+                                        });
+                                      } else {
+                                        // checker
+                                        print("Received invalid location result format: $result");
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text("Invalid location data received."),
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      print("No location selected or page dismissed.");
+                                    }
+                                  },
+                                  child: AbsorbPointer(
+                                    child: TextFormField( 
+                                    controller: locationController,
+                                    decoration: InputDecoration(
+                                      labelText: "Location",
+                                      prefixIcon: Icon(Icons.pin_drop)
+                                    ),
+                                    )
+                                  )
+                                ),
+                                SizedBox(height: 8),
+                                TextFormField(
+                                  decoration: InputDecoration(
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: const Color.fromARGB(255, 233, 232, 232))
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: const Color.fromARGB(255, 233, 232, 232)),
+                                    ),
+                                    filled: true,
+                                    fillColor: const Color.fromARGB(255, 222, 222, 222),
+                                    hintText: '',
+                                    hintStyle: GoogleFonts.poppins(fontSize: 14)
+                                  ),
+                                  onSaved: (value) => setState(() {
+                                    itinerary.notes = value;
+                                  }),
+                                  onChanged: (value) {
+                                    notesController.text = value;
+                                  },
+                                  maxLines: 3,
+                                  controller: notesController
+                                ),
+                                SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    formKeyList[day].currentState!.save();
+                                    
+                                    String? id = await context.read<ItineraryProvider>().getId(widget.travelPlan.id!, date);
+                                    await context.read<ItineraryProvider>().editItinerary(id, widget.travelPlan.id!, date, widget.travelPlan.location, itinerary.notes);
+                                    List<String> updatedInfo = await context.read<ItineraryProvider>().getInfo(widget.travelPlan.id!);
+                                    setState(() {
+                                      information = updatedInfo;
+                                      // Optional: update controller again to reflect backend version
+                                      _notesControllers[day]?.text = updatedInfo[day * 2];
+                                      locationControllers[day]?.text = updatedInfo[1 + day * 2];
+                                    });
+                                    // edit itinerary
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: Size(100, 30),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                    backgroundColor: Color.fromARGB(255, 5, 113, 112),
+                                  ),
+                                  child: Text("Save", style: GoogleFonts.poppins(color: const Color.fromARGB(255, 255, 255, 255))),
+                                ),
+                                // ---- CHECKLIST SECTION ---- not yet implemented !!
+                                // Column(
+                                //   children: List.generate(4, (index) {
+                                //     return CheckboxListTile(
+                                //       value: checkList[index],
+                                //       onChanged: (value) {
+                                //         setState(() {
+                                //           checkList[index] = value!;
+                                //         });
+                                //       },
+                                //       title: Text('Checklist item ${index + 1}', style: GoogleFonts.poppins()),
+                                //     );
+                                //   }),
+                                // ),
+                              ],
+                            ),
+                          ),
+                          )
+                        );
+                      }).toList(),
                     ),
+                  ),
           ),
         ],
       ),
-    );
-  }
-
-  void _showEditModal(BuildContext context, TravelPlan travelPlan) {
-    final nameController = TextEditingController(text: travelPlan.name);
-    final locationController = TextEditingController(
-      text:
-          travelPlan.location != null
-              ? 'Lat: ${travelPlan.location!.latitude}, Lng: ${travelPlan.location!.longitude}'
-              : '',
-    );
-    final startDateController = TextEditingController(
-      text:
-          travelPlan.dates.isNotEmpty
-              ? DateFormat.yMMMd().format(travelPlan.dates.first.toDate())
-              : '',
-    );
-
-    final endDateController = TextEditingController(
-      text:
-          travelPlan.dates.isNotEmpty
-              ? DateFormat.yMMMd().format(travelPlan.dates.last.toDate())
-              : '',
-    );
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Edit Trip',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'Trip Name'),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: locationController,
-                decoration: InputDecoration(labelText: 'Location'),
-                readOnly: true,
-                onTap: () async {
-                  final result = await Navigator.push<Map<String, dynamic>>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MapSearchPage(),
-                    ),
-                  );
-                  if (result != null &&
-                      result.containsKey('latitude') &&
-                      result.containsKey('longitude')) {
-                    setState(() {
-                      locationController.text =
-                          'Lat: ${result['latitude']}, Lng: ${result['longitude']}';
-                    });
-                  }
-                },
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: startDateController,
-                readOnly: true,
-                decoration: InputDecoration(labelText: 'Start Date'),
-                onTap: () async {
-                  DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  setState(() {
-                    startDateController.text = DateFormat.yMMMd().format(
-                      picked!,
-                    );
-                  });
-                },
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: endDateController,
-                readOnly: true,
-                decoration: InputDecoration(labelText: 'End Date'),
-                onTap: () async {
-                  DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  setState(() {
-                    endDateController.text = DateFormat.yMMMd().format(picked!);
-                  });
-                },
-              ),
-              SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: () async {
-                  final startDate = DateFormat.yMMMd().parse(
-                    startDateController.text,
-                  );
-                  final endDate = DateFormat.yMMMd().parse(
-                    endDateController.text,
-                  );
-
-                  final updatedPlan = TravelPlan(
-                    id: travelPlan.id,
-                    name: nameController.text,
-                    dates: [
-                      Timestamp.fromDate(startDate),
-                      Timestamp.fromDate(endDate),
-                    ],
-                    location: GeoPoint(
-                      double.parse(
-                        locationController.text
-                            .split(',')[0]
-                            .split(':')[1]
-                            .trim(),
-                      ),
-                      double.parse(
-                        locationController.text
-                            .split(',')[1]
-                            .split(':')[1]
-                            .trim(),
-                      ),
-                    ),
-                    userId: travelPlan.userId,
-                    imageUrl: travelPlan.imageUrl,
-                  );
-
-                  // Update plan using the TravelPlanProvider
-                  await context.read<TravelPlanProvider>().editPlan(
-                    updatedPlan.id!,
-                    updatedPlan.name,
-                    updatedPlan.dates,
-                    updatedPlan.location!,
-                  );
-
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: Text('Save Changes'),
-              ),
-              SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
     );
   }
 }
