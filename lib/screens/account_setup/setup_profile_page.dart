@@ -208,7 +208,6 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
         if (_formKey.currentState!.validate()) {
           _formKey.currentState!.save();
 
-          // create initial user profile with separate first and last names
           await context.read<UserProfileProvider>().createInitialProfile(
             formValues.textfieldValues['uName']!,
             formValues.textfieldValues['fName']!,
