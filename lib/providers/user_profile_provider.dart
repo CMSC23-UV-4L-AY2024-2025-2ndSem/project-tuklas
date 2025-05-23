@@ -103,13 +103,11 @@ class UserProfileProvider with ChangeNotifier {
 
   Future<void> updateStyles(List<String> styles, String username) async {
     await firebaseService.editUserStyles(styles, username);
-    notifyListeners();
     // Profile will be updated through the stream listener
   }
 
   Future<void> updateInterests(List<String> interests, String username) async {
     await firebaseService.editUserInterests(interests, username);
-    notifyListeners();
     // Profile will be updated through the stream listener
   }
 
@@ -206,5 +204,21 @@ class UserProfileProvider with ChangeNotifier {
     notifyListeners();
     print(requests);
     return requests;
+  }
+
+  Future<void> addStyles(List<String> styles, String username) async {
+    await firebaseService.addUserStyles(styles, username);
+  }
+
+  Future<void> addInterests(List<String> interests, String username) async {
+    await firebaseService.addUserInterests(interests, username);
+  }
+
+  Future<void> addName(
+    String username,
+    String firstName,
+    String lastName,
+  ) async {
+    await firebaseService.addName(username, firstName, lastName);
   }
 }
