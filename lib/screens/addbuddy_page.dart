@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:project_TUKLAS/providers/user_profile_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AddBuddyPage extends StatefulWidget {
   static const routeName = '/add-buddy';
@@ -16,130 +18,200 @@ class _AddBuddyPageState extends State<AddBuddyPage> {
   @override
   void initState() {
     super.initState();
-    // Load current profile and calculate similar users when page opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<UserProfileProvider>();
-      provider.loadCurrentUserProfile().then((_) {
-        provider.calculateAndSetSimilarUsers();
-      });
-    });
+    context.read<UserProfileProvider>().loadCurrentUserProfile();
   }
 
   ImageProvider _getImageProvider(String? imageBase64) {
     if (imageBase64 != null && imageBase64.isNotEmpty) {
       try {
-        return MemoryImage(base64Decode(imageBase64));
+        String sanitizedBase64 = imageBase64;
+        if (imageBase64.contains(',')) {
+          sanitizedBase64 = imageBase64.split(',').last;
+        }
+        return MemoryImage(base64Decode(sanitizedBase64));
       } catch (e) {
         print("Error decoding base64 image: $e");
-        // Fallback to a default asset image if decoding fails
-        return const AssetImage(
-          'assets/images/default_avatar.png',
-        ); // Ensure you have this asset
+        return const AssetImage('assets/images/default_avatar.png');
       }
     }
-    // Fallback for null or empty base64 string
-    return const AssetImage(
-      'assets/images/default_avatar.png',
-    ); // Ensure you have this asset
+    return const AssetImage('assets/images/default_avatar.png');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Find Similar People')),
-      body: StreamBuilder(
-        // Listen to user profile stream for real-time updates
-        stream: context.read<UserProfileProvider>().userProfileStream,
-        builder: (context, profileSnapshot) {
-          if (profileSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (profileSnapshot.hasError) {
-            return Center(child: Text('Error: ${profileSnapshot.error}'));
-          }
-
-          // When profile changes, recalculate similar users
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<UserProfileProvider>().calculateAndSetSimilarUsers();
-          });
-
-          return Consumer<UserProfileProvider>(
-            builder: (context, provider, child) {
-              final similarUsers = provider.similarUsers;
-              final currentProfile = provider.currentUserProfile;
-
-              if (currentProfile == null) {
-                return const Center(
-                  child: Text('Could not load your profile. Please try again.'),
-                );
-              }
-
-              if (similarUsers.isEmpty) {
-                return const Center(child: Text('No similar users found.'));
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(8.0),
-                itemCount: similarUsers.length,
-                itemBuilder: (ctx, index) {
-                  final matchedUser = similarUsers[index];
-                  final user = matchedUser.user;
-
-                  return Card(
-                    elevation: 3,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 6,
+      backgroundColor: Colors.white,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.black),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    "Add Travel Buddy",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 20,
+                      color: Colors.black,
                     ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        radius: 25,
-                        backgroundImage: _getImageProvider(user.imageBase64),
-                        child:
-                            user.imageBase64 == null ||
-                                    user.imageBase64!.isEmpty
-                                ? const Icon(Icons.person, size: 30)
-                                : null,
-                      ),
-                      title: Text(
-                        user.name.isNotEmpty ? user.name : user.username,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        'Match Score: ${matchedUser.matchCount}\n'
-                        'Interests: ${user.interests?.take(3).join(", ") ?? "N/A"}${(user.interests?.length ?? 0) > 3 ? "..." : ""}\n'
-                        'Styles: ${user.styles?.take(3).join(", ") ?? "N/A"}${(user.styles?.length ?? 0) > 3 ? "..." : ""}',
-                        style: TextStyle(color: Colors.grey[700]),
-                      ),
-                      isThreeLine: true,
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.secondary,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onSecondary,
-                        ),
-                        onPressed: () {
-                          print(
-                            'Viewing profile of ${user.username} (UID: ${user.uid})',
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Tapped on ${user.name}')),
-                          );
-                        },
-                        child: const Text('View'),
-                      ),
-                      onTap: () {
-                        print('Tapped on ListTile for ${user.username}');
-                      },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 0, 20.0, 8.0),
+            child: Text(
+              'Top Travel Buddies',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<dynamic>(
+              stream: context.watch<UserProfileProvider>().userProfileStream,
+              builder: (context, profileSnapshot) {
+                if (profileSnapshot.connectionState ==
+                        ConnectionState.waiting &&
+                    context.read<UserProfileProvider>().currentUserProfile ==
+                        null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (profileSnapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Error with profile stream: ${profileSnapshot.error}',
                     ),
                   );
-                },
-              );
-            },
-          );
-        },
+                }
+                return Consumer<UserProfileProvider>(
+                  builder: (context, provider, child) {
+                    final similarUsers = provider.similarUsers;
+                    final currentProfile = provider.currentUserProfile;
+                    if (provider.currentUserProfile == null &&
+                        !(profileSnapshot.connectionState ==
+                            ConnectionState.waiting)) {
+                      return const Center(child: Text('Loading profile...'));
+                    }
+
+                    if (currentProfile == null) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'Could not load your profile. Please try again.',
+                          ),
+                        ),
+                      );
+                    }
+                    if (similarUsers.isEmpty &&
+                        provider.currentUserProfile != null) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            'No similar users found.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    if (similarUsers.isEmpty &&
+                        provider.currentUserProfile == null) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 0),
+                      itemCount: similarUsers.length,
+                      itemBuilder: (ctx, index) {
+                        final matchedUser = similarUsers[index];
+                        final user = matchedUser.user;
+
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 8.0,
+                          ),
+                          leading: CircleAvatar(
+                            radius: 28,
+                            backgroundImage: _getImageProvider(
+                              user.imageBase64,
+                            ),
+                            backgroundColor: Colors.grey[200],
+                            child:
+                                (user.imageBase64 == null ||
+                                        user.imageBase64!.isEmpty)
+                                    ? Icon(
+                                      Icons.person,
+                                      size: 30,
+                                      color: Colors.grey[400],
+                                    )
+                                    : null,
+                          ),
+                          title: Text(
+                            user.name.isNotEmpty ? user.name : user.username,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '@${user.username}',
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey[700],
+                              fontSize: 14,
+                            ),
+                          ),
+                          trailing: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: const Color(0xFFCA4A0C),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.person_add,
+                                color: Colors.white,
+                              ),
+                              iconSize: 22,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              tooltip: 'Add Buddy',
+                              onPressed: () {
+                                print('Add buddy: ${user.username}');
+                              },
+                            ),
+                          ),
+                          onTap: () {
+                            print('Tapped on ListTile for ${user.username}');
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
