@@ -14,10 +14,28 @@ class AddBuddyPage extends StatefulWidget {
 }
 
 class _AddBuddyPageState extends State<AddBuddyPage> {
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    context.read<UserProfileProvider>().loadCurrentUserProfile();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    setState(() => _isLoading = true);
+    try {
+      final provider = context.read<UserProfileProvider>();
+      await provider.loadCurrentUserProfile();
+      // Explicitly calculate similar users after profile is loaded
+      await provider.calculateAndSetSimilarUsers();
+    } catch (e) {
+      print("Error initializing data: $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   ImageProvider _getImageProvider(String? imageBase64) {
@@ -81,148 +99,155 @@ class _AddBuddyPageState extends State<AddBuddyPage> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<dynamic>(
-              stream: context.watch<UserProfileProvider>().userProfileStream,
-              builder: (context, profileSnapshot) {
-                if (profileSnapshot.connectionState ==
-                        ConnectionState.waiting &&
-                    context.read<UserProfileProvider>().currentUserProfile ==
-                        null) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : StreamBuilder<dynamic>(
+                      stream:
+                          context
+                              .watch<UserProfileProvider>()
+                              .userProfileStream,
+                      builder: (context, profileSnapshot) {
+                        if (profileSnapshot.connectionState ==
+                                ConnectionState.waiting &&
+                            context
+                                    .read<UserProfileProvider>()
+                                    .currentUserProfile ==
+                                null) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
 
-                if (profileSnapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Error with profile stream: ${profileSnapshot.error}',
-                    ),
-                  );
-                }
-                return Consumer<UserProfileProvider>(
-                  builder: (context, provider, child) {
-                    final similarUsers = provider.similarUsers;
-                    final currentProfile = provider.currentUserProfile;
-                    if (provider.currentUserProfile == null &&
-                        !(profileSnapshot.connectionState ==
-                            ConnectionState.waiting)) {
-                      return const Center(child: Text('Loading profile...'));
-                    }
+                        if (profileSnapshot.hasError) {
+                          return Center(
+                            child: Text(
+                              'Error with profile stream: ${profileSnapshot.error}',
+                            ),
+                          );
+                        }
 
-                    if (currentProfile == null) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text(
-                            'Could not load your profile. Please try again.',
-                          ),
-                        ),
-                      );
-                    }
-                    if (similarUsers.isEmpty &&
-                        provider.currentUserProfile != null) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            'No similar users found.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                    if (similarUsers.isEmpty &&
-                        provider.currentUserProfile == null) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                        return Consumer<UserProfileProvider>(
+                          builder: (context, provider, child) {
+                            final similarUsers = provider.similarUsers;
+                            final currentProfile = provider.currentUserProfile;
 
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 0),
-                      itemCount: similarUsers.length,
-                      itemBuilder: (ctx, index) {
-                        final matchedUser = similarUsers[index];
-                        final user = matchedUser.user;
+                            if (currentProfile == null) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Text(
+                                    'Could not load your profile. Please try again.',
+                                  ),
+                                ),
+                              );
+                            }
 
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 8.0,
-                          ),
-                          leading: CircleAvatar(
-                            radius: 28,
-                            backgroundImage: _getImageProvider(
-                              user.imageBase64,
-                            ),
-                            backgroundColor: Colors.grey[200],
-                            child:
-                                (user.imageBase64 == null ||
-                                        user.imageBase64!.isEmpty)
-                                    ? Icon(
-                                      Icons.person,
-                                      size: 30,
-                                      color: Colors.grey[400],
-                                    )
-                                    : null,
-                          ),
-                          title: Text(
-                            user.name.isNotEmpty ? user.name : user.username,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                              color: Colors.black,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '@${user.username}',
-                            style: GoogleFonts.poppins(
-                              color: Colors.grey[700],
-                              fontSize: 14,
-                            ),
-                          ),
-                          trailing: ElevatedButton.icon(
-                            icon: const Icon(
-                              Icons.person_add,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            label: Text(
-                              "Add",
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFCA4A0C),
-                              foregroundColor: Colors.white,
-                              shape: const StadiumBorder(),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              elevation: 0,
-                              minimumSize: const Size(0, 32),
-                            ),
-                            onPressed: () {
-                              print('Add buddy: ${user.username}');
-                              // implement add buddy functionality here
-                            },
-                          ),
-                          onTap: () {
-                            print('Tapped on ListTile for ${user.username}');
+                            if (similarUsers.isEmpty) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Text(
+                                    'No similar users found.',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              padding: const EdgeInsets.symmetric(vertical: 0),
+                              itemCount: similarUsers.length,
+                              itemBuilder: (ctx, index) {
+                                final matchedUser = similarUsers[index];
+                                final user = matchedUser.user;
+
+                                return ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0,
+                                    vertical: 8.0,
+                                  ),
+                                  leading: CircleAvatar(
+                                    radius: 28,
+                                    backgroundImage: _getImageProvider(
+                                      user.imageBase64,
+                                    ),
+                                    backgroundColor: Colors.grey[200],
+                                    child:
+                                        (user.imageBase64 == null ||
+                                                user.imageBase64!.isEmpty)
+                                            ? Icon(
+                                              Icons.person,
+                                              size: 30,
+                                              color: Colors.grey[400],
+                                            )
+                                            : null,
+                                  ),
+                                  title: Text(
+                                    user.name.isNotEmpty
+                                        ? user.name
+                                        : user.username,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '@${user.username}',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey[700],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  trailing: ElevatedButton.icon(
+                                    icon: const Icon(
+                                      Icons.person_add,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    label: Text(
+                                      "Add",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFCA4A0C),
+                                      foregroundColor: Colors.white,
+                                      shape: const StadiumBorder(),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      elevation: 0,
+                                      minimumSize: const Size(0, 32),
+                                    ),
+                                    onPressed: () {
+                                      print('Add buddy: ${user.username}');
+                                      // implement add buddy functionality here
+                                    },
+                                  ),
+                                  onTap: () {
+                                    print(
+                                      'Tapped on ListTile for ${user.username}',
+                                    );
+                                  },
+                                );
+                              },
+                            );
                           },
                         );
                       },
-                    );
-                  },
-                );
-              },
-            ),
+                    ),
           ),
         ],
       ),
