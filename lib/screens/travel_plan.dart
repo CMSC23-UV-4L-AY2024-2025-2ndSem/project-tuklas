@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:project_TUKLAS/screens/travel_plan_item.dart';
@@ -76,10 +75,6 @@ class TravelPlanScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<DocumentSnapshot<Map<String, dynamic>>> _fetchUserData(String uid) {
-    return FirebaseFirestore.instance.collection('users').doc(uid).get();
   }
 
   Widget _buildUpcomingPlanCard(TravelPlan? upcomingPlan) {
@@ -364,11 +359,13 @@ class TravelPlanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
     final travelPlanProvider = Provider.of<TravelPlanProvider>(
       context,
       listen: false,
     );
+
+    // Use provider to get current user
+    final currentUser = travelPlanProvider.getCurrentUser();
 
     if (currentUser == null) {
       return Scaffold(
@@ -421,8 +418,9 @@ class TravelPlanScreen extends StatelessWidget {
 
                 allPlans.addAll(sharedPlans);
 
+                // Use provider to fetch user data
                 return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  future: _fetchUserData(currentUser.uid),
+                  future: travelPlanProvider.fetchUserData(currentUser.uid),
                   builder: (context, userSnapshot) {
                     if (userSnapshot.connectionState ==
                         ConnectionState.waiting) {
