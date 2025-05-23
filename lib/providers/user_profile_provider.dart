@@ -166,9 +166,8 @@ class UserProfileProvider with ChangeNotifier {
     }
   }
 
-<<<<<<< HEAD
-  Future<String> sendBuddyReq(String uid, String buddyUser) async {
-    String msg = await firebaseService.sendBuddyReq(uid, buddyUser);
+  Future<String> sendBuddyReq(String uid, String buddyUid) async {
+    String msg = await firebaseService.sendBuddyReq(uid, buddyUid);
     notifyListeners();
     return msg;
   }
@@ -204,7 +203,4 @@ class UserProfileProvider with ChangeNotifier {
     print(requests);
     return requests;
   }
-=======
-
->>>>>>> de80d8365fb97f65069615c50ee80523606674ce
 }
