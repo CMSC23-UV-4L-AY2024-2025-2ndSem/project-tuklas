@@ -1,5 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:project_TUKLAS/api/user_profile_api.dart';
+import 'package:project_TUKLAS/providers/user_profile_provider.dart';
+import 'package:provider/provider.dart';
 
 // dummy model lang, to be replaced
 class UserRequest {
@@ -26,50 +30,22 @@ class BuddyRequestsScreen extends StatefulWidget {
 }
 
 class _BuddyRequestsScreenState extends State<BuddyRequestsScreen> {
+  final FirebaseUserProfileApi _userApi = FirebaseUserProfileApi();
   List<UserRequest> _requests = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // for testing
-    _loadDummyRequests();
+    _fetchRequests();
   }
 
-  // for testing, fetch from provider
-  void _loadDummyRequests() {
+  Future<void> _fetchRequests() async {
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+    final requests = await _userApi.getBuddyRequests(currentUserId);
     setState(() {
-      _requests = [
-        UserRequest(
-          id: '1',
-          name: "Aliyah Gabrielle",
-          username: "@gab",
-          avatarUrl: null,
-        ),
-        UserRequest(
-          id: '2',
-          name: "King Dela Cruz",
-          username: "@king",
-          avatarUrl: null,
-        ),
-        UserRequest(
-          id: '3',
-          name: "Paulene Aguilar",
-          username: "@pau",
-          avatarUrl: null,
-        ),
-        UserRequest(
-          id: '4',
-          name: "Aliyah Gabrielle",
-          username: "@gab",
-          avatarUrl: null,
-        ),
-        UserRequest(
-          id: '5',
-          name: "King Dela Cruz",
-          username: "@king",
-          avatarUrl: null,
-        ),
-      ];
+      _requests = requests;
+      _isLoading = false;
     });
   }
 
@@ -155,25 +131,29 @@ class _BuddyRequestsScreenState extends State<BuddyRequestsScreen> {
                         final request = _requests[index];
                         return _RequestListItem(
                           userRequest: request,
-                          onAccept: () {
+                          onAccept: () async {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Accepted ${request.name}'),
+                                content: Text('Accepted @${request.username}'),
                               ),
                             );
+                            await context.read<UserProfileProvider>().processRequest(request.id, true);
                             setState(() {
                               _requests.removeAt(
                                 index,
                               ); // Example: remove from list
                             });
                           },
-                          onDecline: () {
+                          onDecline: () async {
                             // Placeholder for decline logic
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Declined ${request.name}'),
+                                content: Text('Declined @${request.username}'),
                               ),
                             );
+
+                            await context.read<UserProfileProvider>().processRequest(request.id, false);
+
                             setState(() {
                               _requests.removeAt(
                                 index,
@@ -226,18 +206,11 @@ class _RequestListItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  userRequest.name,
+                  '@${userRequest.username}',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                     color: Colors.black,
-                  ),
-                ),
-                Text(
-                  userRequest.username,
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey[700],
-                    fontSize: 14,
                   ),
                 ),
               ],
