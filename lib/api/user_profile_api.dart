@@ -112,10 +112,28 @@ class FirebaseUserProfileApi {
         if (styles != null) 'styles': styles,
         if (interests != null) 'interests': interests,
       });
-
       return 'Profile updated successfully';
     } catch (e) {
       return 'Error updating profile: $e';
+    }
+  }
+
+  Future<String> updateUserProfileImage(
+    String base64Image,
+    String username,
+  ) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return 'No user logged in';
+      }
+
+      await _firestore.collection('users').doc(user.uid).update({
+        'imageBase64': base64Image,
+      });
+      return 'Profile image updated successfully';
+    } catch (e) {
+      return 'Error updating profile image: $e';
     }
   }
 

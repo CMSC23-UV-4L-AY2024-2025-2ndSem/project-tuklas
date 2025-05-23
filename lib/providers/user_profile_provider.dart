@@ -106,6 +106,11 @@ class UserProfileProvider with ChangeNotifier {
     // Profile will be updated through the stream listener
   }
 
+  Future<void> updateProfileImage(String base64Image, String username) async {
+    await firebaseService.updateUserProfileImage(base64Image, username);
+    // Profile will be updated through the stream listener
+  }
+
   Future<List<UserProfile>> getAllOtherUsers() async {
     return await firebaseService.getAllOtherUsers();
   }
