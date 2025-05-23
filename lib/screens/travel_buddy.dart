@@ -10,6 +10,18 @@ class TravelBuddyScreen extends StatelessWidget {
     TravelBuddy(name: "Paulene Aguilar", username: "@pau"),
   ];
 
+  // method to change greeting depending on time of day
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning,';
+    } else if (hour < 18) {
+      return 'Good Afternoon,';
+    } else {
+      return 'Good Evening,';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -23,9 +35,9 @@ class TravelBuddyScreen extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        "Good morning,",
+                        _getGreeting(),
                         style: TextStyle(
                           fontSize: 14,
                           color: Color.fromARGB(255, 0, 0, 0),
