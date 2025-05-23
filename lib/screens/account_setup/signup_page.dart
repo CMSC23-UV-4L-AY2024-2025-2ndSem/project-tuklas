@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:project_TUKLAS/providers/auth_provider.dart';
 import 'package:project_TUKLAS/screens/account_setup/travel_styles_page.dart';
 import 'package:project_TUKLAS/screens/signin_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../models/signup_form_values.dart';
 
-// The SignUp page ask for the users email and password,
-// Email must be in proper format and can be used multiple times.
-// Passwords will be checked if it is at least 6 characters,
-// contains an uppercase and lowercase letter, a number, and at least one special character.
+// The SignUp page ask for the users email, username and password.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -18,6 +17,7 @@ class SignUpPage extends StatefulWidget {
 class _SignUpState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   bool showEmailSignUpErrorMessage = false;
+  bool showUserSignUpErrorMessage = false;
 
   List<String> special = [
     '!',
@@ -51,6 +51,7 @@ class _SignUpState extends State<SignUpPage> {
                   child: Column(
                     children: [
                       nameField('Email', 'email'),
+                      nameField('Username', 'uName'),
                       nameField('Password', 'password'),
                     ],
                   ),
@@ -58,6 +59,9 @@ class _SignUpState extends State<SignUpPage> {
                 // error messages - not always displayed
                 showEmailSignUpErrorMessage
                     ? signUpErrorMessage('Email')
+                    : Container(),
+                showUserSignUpErrorMessage
+                    ? signUpErrorMessage('Username')
                     : Container(),
 
                 Container(
@@ -148,8 +152,23 @@ class _SignUpState extends State<SignUpPage> {
         if (val == 'email' && (!value.contains('@') || !value.contains('.'))) {
           // check for significant symbols
           return "Please enter a valid email format";
-        } // if input field is for password
-        else if (val == 'password') {
+        } else if (val == 'uName') {
+          for (int i = 0; i < value.length; i++) {
+            if ((int.tryParse(value[i]).runtimeType ==
+                    int) || // check if character is a number
+                (value[i] == '.' ||
+                    value[i] == '_') || // check if character is a '.' or '_'
+                value[i].codeUnitAt(0) >= 65 &&
+                    value[i].codeUnitAt(0) <=
+                        90 || // check if character is an uppercase letter
+                value[i].codeUnitAt(0) >= 97 && value[i].codeUnitAt(0) <= 122) {
+              // check if character is a lowercase letter
+              continue;
+            } else {
+              return "A username may only contain letters A-Z or a-z, 0-9, _ and .";
+            }
+          }
+        } else if (val == 'password') {
           if (value.length < 6) {
             return "Password must be at least 6 characters.";
           } else {
@@ -199,22 +218,71 @@ class _SignUpState extends State<SignUpPage> {
 
   Widget get submitButton => ElevatedButton(
     onPressed: () async {
+      setState(() {
+        showEmailSignUpErrorMessage = false;
+        showUserSignUpErrorMessage = false;
+      });
+
       if (_formKey.currentState!.validate()) {
-        // email and password validated
         _formKey.currentState!.save();
-        // navigate to TravelStylePage
-        Navigator.pop(context);
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => TravelStylesPage(
-                    email: formValues.textfieldValues['email']!,
-                    password: formValues.textfieldValues['password']!,
+
+        bool userExists = await context
+            .read<UserAuthProvider>()
+            .authService
+            .checkUsername(formValues.textfieldValues['uName']!);
+
+        if (userExists) {
+          // if it is not empty, username is already being used
+          setState(() {
+            showUserSignUpErrorMessage = true;
+          });
+        } else {
+          // if username is unique, check if email is already being used
+          setState(() {
+            showUserSignUpErrorMessage = false;
+          });
+
+          // SIGN UP USER
+          if (mounted) {
+            String message = await context
+                .read<UserAuthProvider>()
+                .authService
+                .signUp(
+                  formValues.textfieldValues['email']!,
+                  formValues.textfieldValues['uName']!,
+                  formValues.textfieldValues['password']!,
+                );
+            if (message == 'Success!') {
+              // if sign up is successful, navigate to TravelStylePage
+              setState(() {
+                showEmailSignUpErrorMessage = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Signed up successfully: $message')),
+              );
+              // navigate to TravelStylePage
+              Navigator.pop(context);
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => TravelStylesPage(
+                          username: formValues.textfieldValues['uName']!,
+                        ),
                   ),
-            ),
-          );
+                );
+              }
+            } else {
+              // if it is not empty, email is already being used
+              setState(() {
+                showEmailSignUpErrorMessage = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Sign-up error: $message')),
+              );
+            }
+          }
         }
       }
     },
@@ -285,8 +353,7 @@ class _SignUpState extends State<SignUpPage> {
                 MaterialPageRoute(
                   builder:
                       (context) => TravelStylesPage(
-                        email: formValues.textfieldValues['email']!,
-                        password: formValues.textfieldValues['password']!,
+                        username: formValues.textfieldValues['uName']!,
                       ),
                 ),
               );
