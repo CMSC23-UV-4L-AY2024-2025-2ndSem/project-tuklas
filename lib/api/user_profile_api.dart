@@ -261,7 +261,6 @@ class FirebaseUserProfileApi {
     } catch (e) {
       print('Error sending buddy request: $e');
       return 'An error occurred while sending the request.';
-
     }
   }
 
@@ -351,7 +350,6 @@ class FirebaseUserProfileApi {
   }
 
   Future<String?> findName(String uid) async {
-
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (doc.exists) {
@@ -390,7 +388,6 @@ class FirebaseUserProfileApi {
   }
 
   Future<String?> findUsername(String uid) async {
-
     final querySnapshot = await FirebaseFirestore.instance
       .collection('users')
       .where('id', isEqualTo: uid)
@@ -400,9 +397,40 @@ class FirebaseUserProfileApi {
     if (querySnapshot.docs.isEmpty) return null;
 
     return querySnapshot.docs[0]['username'];
+
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getUser(String userId) {
     return _firestore.collection('users').doc(userId).get();
+  }
+
+  Future<void> addUserStyles(List<String> styles, String username) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+    await userDoc.update({'styles': styles});
+  }
+
+  Future<void> addUserInterests(List<String> interests, String username) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+    await userDoc.update({'interests': interests});
+  }
+
+  Future<void> addName(String username, String fName, String lName) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
+    await userDoc.update({'fname': fName, 'lname': lName});
   }
 }

@@ -208,21 +208,29 @@ class _SetupProfilePageState extends State<SetupProfilePage> {
         if (_formKey.currentState!.validate()) {
           _formKey.currentState!.save();
 
-          await context.read<UserProfileProvider>().createInitialProfile(
+          await context.read<UserProfileProvider>().addName(
             formValues.textfieldValues['uName']!,
             formValues.textfieldValues['fName']!,
             formValues.textfieldValues['lName']!,
           );
 
           //upload image to Firestore as base64
-          final base64Image = pickedFileBytes != null ? base64Encode(pickedFileBytes!) : null;
+          final base64Image =
+              pickedFileBytes != null ? base64Encode(pickedFileBytes!) : null;
 
           if (base64Image != null) {
             // get username from the current user profile in provider
-            final username = context.read<UserProfileProvider>().currentUserProfile?.username;
+            final username =
+                context
+                    .read<UserProfileProvider>()
+                    .currentUserProfile
+                    ?.username;
 
             if (username != null && username.isNotEmpty) {
-              await context.read<UserProfileProvider>().updateProfileImage(base64Image, username);
+              await context.read<UserProfileProvider>().updateProfileImage(
+                base64Image,
+                username,
+              );
             } else {
               // handle missing username case (e.g., show error)
             }

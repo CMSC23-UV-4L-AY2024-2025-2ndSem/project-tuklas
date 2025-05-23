@@ -134,7 +134,7 @@ class _InterestsState extends State<InterestsPage> {
   Widget get submitButton => ElevatedButton(
     onPressed: () async {
       // update user interests in the database
-      await context.read<UserProfileProvider>().updateInterests(
+      await context.read<UserProfileProvider>().addInterests(
         selectedInterests,
         widget.username!,
       );

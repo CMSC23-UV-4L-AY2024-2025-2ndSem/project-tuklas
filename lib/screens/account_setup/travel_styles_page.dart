@@ -135,7 +135,7 @@ class _TravelStylesState extends State<TravelStylesPage> {
   Widget get submitButton => ElevatedButton(
     onPressed: () async {
       // Update the user's travel styles in the provider
-      await context.read<UserProfileProvider>().updateStyles(
+      await context.read<UserProfileProvider>().addStyles(
         selectedStyles,
         widget.username!,
       );
