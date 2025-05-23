@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:project_TUKLAS/api/firebase_auth_api.dart';
 import 'package:project_TUKLAS/api/firebase_plans_api.dart';
 import 'package:project_TUKLAS/models/travel_plan_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TravelPlanProvider with ChangeNotifier {
   late Stream<QuerySnapshot> _travelsStream;
@@ -85,5 +86,15 @@ class TravelPlanProvider with ChangeNotifier {
     print(message);
     notifyListeners();
     return message;
+  }
+
+  // Method to get the current authenticated user
+  User? getCurrentUser() {
+    return authService.auth.currentUser;
+  }
+
+  // Method to fetch user data by UID from Firestore
+  Future<DocumentSnapshot<Map<String, dynamic>>> fetchUserData(String uid) {
+    return FirebaseFirestore.instance.collection('users').doc(uid).get();
   }
 }
