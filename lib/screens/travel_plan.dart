@@ -190,6 +190,18 @@ class TravelPlanScreen extends StatelessWidget {
     );
   }
 
+  // method to change greeting depending on time of day
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning,';
+    } else if (hour < 18) {
+      return 'Good Afternoon,';
+    } else {
+      return 'Good Evening,';
+    }
+  }
+
   Widget _buildContent(
     BuildContext context,
     String fullName,
@@ -228,7 +240,7 @@ class TravelPlanScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Good morning,",
+                          _getGreeting(),
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color: const Color.fromARGB(255, 0, 0, 0),
