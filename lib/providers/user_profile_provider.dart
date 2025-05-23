@@ -78,6 +78,7 @@ class UserProfileProvider with ChangeNotifier {
     notifyListeners();
   }
 
+
   // Fetch and store current user profile
   Future<UserProfile?> loadCurrentUserProfile() async {
     try {
@@ -165,6 +166,7 @@ class UserProfileProvider with ChangeNotifier {
     }
   }
 
+<<<<<<< HEAD
   Future<String> sendBuddyReq(String uid, String buddyUser) async {
     String msg = await firebaseService.sendBuddyReq(uid, buddyUser);
     notifyListeners();
@@ -202,4 +204,7 @@ class UserProfileProvider with ChangeNotifier {
     print(requests);
     return requests;
   }
+=======
+
+>>>>>>> de80d8365fb97f65069615c50ee80523606674ce
 }

@@ -122,6 +122,7 @@ class FirebaseUserProfileApi {
     }
   }
 
+
   Future<String> updateUserProfileImage(
     String imageBase64,
     String username,
