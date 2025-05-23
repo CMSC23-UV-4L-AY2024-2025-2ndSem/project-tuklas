@@ -189,11 +189,11 @@ class TravelPlanScreen extends StatelessWidget {
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return 'Good Morning,';
+      return 'Good morning,';
     } else if (hour < 18) {
-      return 'Good Afternoon,';
+      return 'Good afternoon,';
     } else {
-      return 'Good Evening,';
+      return 'Good evening,';
     }
   }
 
@@ -224,7 +224,7 @@ class TravelPlanScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(18.0, 15.0, 18.0, 20.0),
+          padding: const EdgeInsets.fromLTRB(18.0, 30.0, 18.0, 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -234,6 +234,7 @@ class TravelPlanScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(height: 3),
                         Text(
                           _getGreeting(),
                           style: GoogleFonts.poppins(
@@ -287,6 +288,13 @@ class TravelPlanScreen extends StatelessWidget {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF14645B),
+                      width: 1.5,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 0,

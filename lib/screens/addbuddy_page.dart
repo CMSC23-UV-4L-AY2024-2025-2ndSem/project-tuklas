@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -183,22 +182,36 @@ class _AddBuddyPageState extends State<AddBuddyPage> {
                               fontSize: 14,
                             ),
                           ),
-                          trailing: CircleAvatar(
-                            radius: 22,
-                            backgroundColor: const Color(0xFFCA4A0C),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.person_add,
-                                color: Colors.white,
-                              ),
-                              iconSize: 22,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              tooltip: 'Add Buddy',
-                              onPressed: () {
-                                print('Add buddy: ${user.username}');
-                              },
+                          trailing: ElevatedButton.icon(
+                            icon: const Icon(
+                              Icons.person_add,
+                              color: Colors.white,
+                              size: 16,
                             ),
+                            label: Text(
+                              "Add",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFCA4A0C),
+                              foregroundColor: Colors.white,
+                              shape: const StadiumBorder(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              elevation: 0,
+                              minimumSize: const Size(0, 32),
+                            ),
+                            onPressed: () {
+                              print('Add buddy: ${user.username}');
+                              // implement add buddy functionality here
+                            },
                           ),
                           onTap: () {
                             print('Tapped on ListTile for ${user.username}');
