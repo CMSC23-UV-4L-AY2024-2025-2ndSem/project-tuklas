@@ -261,7 +261,7 @@ class _SignUpState extends State<SignUpPage> {
                 SnackBar(content: Text('Signed up successfully: $message')),
               );
               // navigate to TravelStylePage
-              Navigator.pop(context);
+
               if (mounted) {
                 Navigator.pushReplacement(
                   context,

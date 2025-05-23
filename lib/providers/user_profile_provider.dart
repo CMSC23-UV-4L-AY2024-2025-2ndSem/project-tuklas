@@ -60,13 +60,16 @@ class UserProfileProvider with ChangeNotifier {
       phoneNumber: profile.phone,
       isPublic: profile.isPublic,
     );
-    print(message);  }
+    print(message);
+  }
 
   Future<void> createInitialProfile(
     String username,
     String firstName,
-    String lastName,
-    {String? phone, bool isPublic = false}) async {
+    String lastName, {
+    String? phone,
+    bool isPublic = false,
+  }) async {
     await firebaseService.createUserProfile(
       username: username,
       firstName: firstName,
@@ -77,7 +80,6 @@ class UserProfileProvider with ChangeNotifier {
     await loadCurrentUserProfile();
     notifyListeners();
   }
-
 
   // Fetch and store current user profile
   Future<UserProfile?> loadCurrentUserProfile() async {
@@ -101,11 +103,13 @@ class UserProfileProvider with ChangeNotifier {
 
   Future<void> updateStyles(List<String> styles, String username) async {
     await firebaseService.editUserStyles(styles, username);
+    notifyListeners();
     // Profile will be updated through the stream listener
   }
 
   Future<void> updateInterests(List<String> interests, String username) async {
     await firebaseService.editUserInterests(interests, username);
+    notifyListeners();
     // Profile will be updated through the stream listener
   }
 
@@ -153,7 +157,7 @@ class UserProfileProvider with ChangeNotifier {
 
       if (isSuccess) {
         await loadCurrentUserProfile(); // Reload profile data after update
-        notifyListeners();              // Notify UI of changes
+        notifyListeners(); // Notify UI of changes
         return true;
       } else {
         print('Failed to update profile image: $result');
