@@ -8,6 +8,7 @@ import 'package:project_TUKLAS/screens/main_screen.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
+import 'providers/itinerary_provider.dart';
 import 'screens/account_setup/signup_page.dart';
 
 Future<void> main() async {
@@ -20,6 +21,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserAuthProvider()),
         ChangeNotifierProvider(create: (_) => TravelPlanProvider()),
         Provider<UserProfileProvider>(create: (_) => UserProfileProvider()),
+        ChangeNotifierProvider(create: (_) => ItineraryProvider()),
       ],
       child: const MyApp(),
     ),
