@@ -98,6 +98,8 @@ class FirebaseUserProfileApi {
     required String lastName,
     List<String>? styles,
     List<String>? interests,
+    required String phoneNumber,
+    required bool isPublic, // 👈 add this
   }) async {
     try {
       final user = _auth.currentUser;
@@ -109,6 +111,8 @@ class FirebaseUserProfileApi {
         'username': username,
         'fname': firstName,
         'lname': lastName,
+        'phoneNumber': phoneNumber,
+        'isPublic': isPublic,
         if (styles != null) 'styles': styles,
         if (interests != null) 'interests': interests,
       });
@@ -118,8 +122,9 @@ class FirebaseUserProfileApi {
     }
   }
 
+
   Future<String> updateUserProfileImage(
-    String base64Image,
+    String imageBase64,
     String username,
   ) async {
     try {
@@ -129,7 +134,7 @@ class FirebaseUserProfileApi {
       }
 
       await _firestore.collection('users').doc(user.uid).update({
-        'imageBase64': base64Image,
+        'imageBase64': imageBase64,
       });
       return 'Profile image updated successfully';
     } catch (e) {
@@ -141,7 +146,7 @@ class FirebaseUserProfileApi {
   Future<void> createUserProfile({
     required String username,
     required String firstName,
-    required String lastName,
+    required String lastName, required bool isPublic, String? phoneNumber,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -152,6 +157,8 @@ class FirebaseUserProfileApi {
       'username': username,
       'fname': firstName,
       'lname': lastName,
+      'isPublic': isPublic,
+      'phone': phoneNumber ?? '',
       'styles': <String>[],
       'interests': <String>[],
     });
@@ -199,23 +206,20 @@ class FirebaseUserProfileApi {
   }
 
   // method to update user profile image base64 in Firestore
-  Future<void> updateProfileImage(String base64Image, String username) async {
+  Future<String> updateProfileImage(String imageBase64,) async {
     try {
-      final userQuery =
-          await _firestore
-              .collection('users')
-              .where('username', isEqualTo: username)
-              .limit(1)
-              .get();
-
-      if (userQuery.docs.isNotEmpty) {
-        await userQuery.docs.first.reference.update({
-          'profileImage': base64Image,
-        });
+      final user = _auth.currentUser;
+      if (user == null) {
+        return 'No user logged in';
       }
+
+      await _firestore.collection('users').doc(user.uid).update({
+        'imageBase64': imageBase64,
+      });
+
+      return 'Profile image updated successfully';
     } catch (e) {
-      print('Error updating profile image: $e');
-      rethrow;
+      return 'Error updating profile image: $e';
     }
   }
 
