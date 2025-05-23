@@ -220,30 +220,32 @@ class FirebaseUserProfileApi {
   }
 
   Future<String> sendBuddyReq(String uid, String buddyUser) async {
-    Map<String, dynamic> req = {
-      'username': buddyUser
-    };
+    Map<String, dynamic> req = {'username': buddyUser};
     String? msg;
     try {
       String? buddyUid = await findId(buddyUser);
-      await FirebaseFirestore
-      .instance
-      .collection('users')
-      .doc(uid)
-      .collection('buddies')
-      .where('username', isEqualTo: buddyUser)
-      .limit(1)
-      .get()
-      .then((QuerySnapshot querySnapshot) async {
-        if (querySnapshot.docs.isEmpty) {
-          await _firestore.collection('users').doc(buddyUid).collection('requests').doc(buddyUid).set(req);
-          msg = 'Successfully sent request!';
-        } else {
-          msg = 'Already friends with user!';
-        }
-        print (msg);
-        return msg;
-      });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('buddies')
+          .where('username', isEqualTo: buddyUser)
+          .limit(1)
+          .get()
+          .then((QuerySnapshot querySnapshot) async {
+            if (querySnapshot.docs.isEmpty) {
+              await _firestore
+                  .collection('users')
+                  .doc(buddyUid)
+                  .collection('requests')
+                  .doc(uid)
+                  .set(req);
+              msg = 'Successfully sent request!';
+            } else {
+              msg = 'Already friends with user!';
+            }
+            print(msg);
+            return msg;
+          });
     } on FirebaseException catch (e) {
       msg = 'Error on ${e.code}: ${e.message}';
     }
@@ -253,11 +255,26 @@ class FirebaseUserProfileApi {
   Future<String> processRequest(String buddyUid, bool accept) async {
     final user = _auth.currentUser;
     try {
-      if (accept){
-        await _firestore.collection('users').doc(buddyUid).collection('buddies').doc(user!.uid).set({'id': user.uid});
-        await _firestore.collection('users').doc(user.uid).collection('buddies').doc(buddyUid).set({'id': buddyUid});
+      if (accept) {
+        await _firestore
+            .collection('users')
+            .doc(buddyUid)
+            .collection('buddies')
+            .doc(user!.uid)
+            .set({'id': user.uid});
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('buddies')
+            .doc(buddyUid)
+            .set({'id': buddyUid});
       }
-      await _firestore.collection('users').doc(user!.uid).collection('requests').doc(buddyUid).delete();
+      await _firestore
+          .collection('users')
+          .doc(user!.uid)
+          .collection('requests')
+          .doc(buddyUid)
+          .delete();
       return "Success!";
     } on FirebaseException catch (e) {
       return "Error on ${e.code}: ${e.message}";
@@ -265,46 +282,55 @@ class FirebaseUserProfileApi {
   }
 
   Stream<QuerySnapshot> getAllBuddies(uid) {
-    return _firestore.collection('users').doc(uid).collection('buddies').snapshots();
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('buddies')
+        .snapshots();
   }
 
-   Stream<QuerySnapshot> getAllRequests(uid) {
-    return _firestore.collection('users').doc(uid).collection('requests').snapshots();
+  Stream<QuerySnapshot> getAllRequests(uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('requests')
+        .snapshots();
   }
 
   Future<String?> findName(String username) async {
     String? name;
     await FirebaseFirestore
-      .instance // snapshot of db with usernames similar to username
-      .collection('users')
-      .where('username', isEqualTo: username)
-      .limit(1)
-      .get()
-      .then((QuerySnapshot querySnapshot) {
-        if (querySnapshot.docs.isEmpty) {
-          name = null;
-        } else {
-          name = querySnapshot.docs[0]['fname'] + querySnapshot.docs[0]['lname'];
-        }
-      });
+        .instance // snapshot of db with usernames similar to username
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+          if (querySnapshot.docs.isEmpty) {
+            name = null;
+          } else {
+            name =
+                querySnapshot.docs[0]['fname'] + querySnapshot.docs[0]['lname'];
+          }
+        });
     return name;
   }
 
   Future<String?> findId(String username) async {
     String? id;
     await FirebaseFirestore
-      .instance // snapshot of db with usernames similar to username
-      .collection('users')
-      .where('username', isEqualTo: username)
-      .limit(1)
-      .get()
-      .then((QuerySnapshot querySnapshot) {
-        if (querySnapshot.docs.isEmpty) {
-          id = null;
-        } else {
-          id = querySnapshot.docs[0]['id'];
-        }
-      });
+        .instance // snapshot of db with usernames similar to username
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+          if (querySnapshot.docs.isEmpty) {
+            id = null;
+          } else {
+            id = querySnapshot.docs[0]['id'];
+          }
+        });
     return id;
   }
 }
