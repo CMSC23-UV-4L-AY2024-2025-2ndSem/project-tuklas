@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:project_TUKLAS/api/user_profile_api.dart';
 import 'package:project_TUKLAS/screens/buddy_requests_screen.dart';
 import 'package:project_TUKLAS/screens/user_profile.dart';
 import 'package:provider/provider.dart';
@@ -15,9 +17,34 @@ class TravelBuddyScreen extends StatefulWidget {
 }
 
 class _TravelBuddyScreenState extends State<TravelBuddyScreen> {
-  // for future use
-  List<TravelBuddy> buddies = [];
+  final FirebaseUserProfileApi _userApi = FirebaseUserProfileApi();
+  List<UserRequest> _buddies = [];
+  bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadTravelBuddies();
+  }
+
+  Future<void> _loadTravelBuddies() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    try {
+      final fetchedBuddies = await _userApi.getTravelBuddies(uid);
+      setState(() {
+        _buddies = fetchedBuddies;
+        _isLoading = false;
+      });
+    } catch (e) {
+      // handle errors
+      setState(() {
+        _buddies = [];
+        _isLoading = false;
+      });
+    }
+  }
+  
   // method to change greeting depending on time of day
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -236,14 +263,21 @@ class _TravelBuddyScreenState extends State<TravelBuddyScreen> {
                   const SizedBox(height: 15),
                   Expanded(
                     child:
-                        buddies.isEmpty
+                        _buddies.isEmpty
                             ? _buildNoBuddiesWidget()
                             : ListView.builder(
-                              itemCount: buddies.length,
+                              itemCount: _buddies.length,
                               itemBuilder: (context, index) {
-                                final buddy = buddies[index];
-                                return TravelBuddyItem(buddy: buddy);
-                              },
+                                final buddy = _buddies[index];
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundImage: buddy.avatarUrl != null && buddy.avatarUrl!.isNotEmpty
+                                        ? NetworkImage(buddy.avatarUrl!)
+                                        : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                                  ),
+                                  title: Text('@${buddy.username}'),
+                                );
+                              }
                             ),
                   ),
                 ],
